@@ -23,75 +23,8 @@ public class DataHolder {
         this.macdOverRsiCloseValue = getMacdOverRsiValueAtIndex(endIndex - 1);
     }
 
-    public double getMacdOverRsiSignalLineValueAtIndex(int index) {
-        EMAIndicator signal = new EMAIndicator(macdOverRsiIndicator, MACDOverRSIConstants.SIGNAL_LENGTH);
-        return signal.getValue(index).doubleValue();
-    }
-
-    public double getMacdOverRsiMacdLineValueAtIndex(int index) {
-        return macdOverRsiIndicator.getValue(index).doubleValue();
-    }
-
-    public double getMacdOverRsiValueAtIndex(int index) {
-        return getMacdOverRsiMacdLineValueAtIndex(index) - getMacdOverRsiSignalLineValueAtIndex(index);
-    }
-
     public double getMacdOverRsiCloseValue() {
         return macdOverRsiCloseValue;
-    }
-
-    public double getRsiOpenValue() {
-        return rsiIndicator.getValue(endIndex).doubleValue();
-    }
-
-    public double getRsiCloseValue() {
-        return rsiIndicator.getValue(endIndex - 1).doubleValue();
-    }
-
-    public double getRSIValueAtIndex(int index) {
-        return rsiIndicator.getValue(index).doubleValue();
-    }
-
-    public double getSMAValueAtIndex(int index) {
-        return smaIndicator.getValue(index).doubleValue();
-    }
-
-
-    public boolean crossed(IndicatorType indicatorType, CrossType crossType, CandleType candleType, double threshold) {
-        switch (indicatorType) {
-            case RSI:
-                return rsiCrossed(crossType, candleType, threshold);
-            case MACD_OVER_RSI:
-                return macdOverRsiCrossed(crossType, candleType, threshold);
-        }
-        return true; // will not come to this!
-
-    }
-
-    private boolean rsiCrossed(CrossType crossType, CandleType candleType, double threshold) {
-        double rsiValueNow, rsiValuePrev;
-        if (candleType == CandleType.OPEN) {
-            rsiValueNow = getRsiOpenValue();
-            rsiValuePrev = getRsiCloseValue();
-        } else {
-            rsiValueNow = getRsiCloseValue();
-            rsiValuePrev = getRSIValueAtIndex(endIndex - 2);
-        }
-        if (crossType == CrossType.UP) return rsiValueNow > threshold && rsiValuePrev <= threshold;
-        return rsiValuePrev >= threshold && rsiValueNow < threshold;
-    }
-
-    private boolean macdOverRsiCrossed(CrossType crossType, CandleType candleType, double threshold) {
-        double currentMacdOverRsiValue, prevMacdOverRsiValue;
-        if (candleType == CandleType.OPEN) {
-            currentMacdOverRsiValue = getMacdOverRsiValueAtIndex(endIndex);
-            prevMacdOverRsiValue = macdOverRsiCloseValue;
-        } else {
-            currentMacdOverRsiValue = macdOverRsiCloseValue;
-            prevMacdOverRsiValue = getMacdOverRsiValueAtIndex(endIndex - 2);
-        }
-        if (crossType == CrossType.UP) return currentMacdOverRsiValue > threshold && prevMacdOverRsiValue <= threshold;
-        return prevMacdOverRsiValue >= threshold && currentMacdOverRsiValue < threshold;
     }
 
     public boolean above(IndicatorType indicatorType, CandleType type, int threshold) {
@@ -116,6 +49,69 @@ public class DataHolder {
         }
     }
 
+    public boolean crossed(IndicatorType indicatorType, CrossType crossType, CandleType candleType, double threshold) {
+        return switch (indicatorType) {
+            case RSI -> rsiCrossed(crossType, candleType, threshold);
+            case MACD_OVER_RSI -> macdOverRsiCrossed(crossType, candleType, threshold);
+            default -> true; // will not come to this!
+        };
+    }
+
+    public double getMacdOverRsiValueAtIndex(int index) {
+        return getMacdOverRsiMacdLineValueAtIndex(index) - getMacdOverRsiSignalLineValueAtIndex(index);
+    }
+
+    private double getMacdOverRsiMacdLineValueAtIndex(int index) {
+        return macdOverRsiIndicator.getValue(index).doubleValue();
+    }
+
+    private double getMacdOverRsiSignalLineValueAtIndex(int index) {
+        EMAIndicator signal = new EMAIndicator(macdOverRsiIndicator, MACDOverRSIConstants.SIGNAL_LENGTH);
+        return signal.getValue(index).doubleValue();
+    }
+
+    public double getSMAValueAtIndex(int index) {
+        return smaIndicator.getValue(index).doubleValue();
+    }
+
+    private boolean rsiCrossed(CrossType crossType, CandleType candleType, double threshold) {
+        double rsiValueNow, rsiValuePrev;
+        if (candleType == CandleType.OPEN) {
+            rsiValueNow = getRsiOpenValue();
+            rsiValuePrev = getRsiCloseValue();
+        } else {
+            rsiValueNow = getRsiCloseValue();
+            rsiValuePrev = getRSIValueAtIndex(endIndex - 2);
+        }
+        if (crossType == CrossType.UP) return rsiValueNow > threshold && rsiValuePrev <= threshold;
+        return rsiValuePrev >= threshold && rsiValueNow < threshold;
+    }
+
+    public double getRsiOpenValue() {
+        return rsiIndicator.getValue(endIndex).doubleValue();
+    }
+
+    public double getRsiCloseValue() {
+        return rsiIndicator.getValue(endIndex - 1).doubleValue();
+    }
+
+    public double getRSIValueAtIndex(int index) {
+        return rsiIndicator.getValue(index).doubleValue();
+    }
+
+    private boolean macdOverRsiCrossed(CrossType crossType, CandleType candleType, double threshold) {
+        double currentMacdOverRsiValue, prevMacdOverRsiValue;
+        if (candleType == CandleType.OPEN) {
+            currentMacdOverRsiValue = getMacdOverRsiValueAtIndex(endIndex);
+            prevMacdOverRsiValue = macdOverRsiCloseValue;
+        } else {
+            currentMacdOverRsiValue = macdOverRsiCloseValue;
+            prevMacdOverRsiValue = getMacdOverRsiValueAtIndex(endIndex - 2);
+        }
+        if (crossType == CrossType.UP) return currentMacdOverRsiValue > threshold && prevMacdOverRsiValue <= threshold;
+        return prevMacdOverRsiValue >= threshold && currentMacdOverRsiValue < threshold;
+    }
+
     public synchronized Double getCurrentPrice() {
         return currentPrice;
     }
@@ -127,7 +123,6 @@ public class DataHolder {
     public int getLastCloseIndex() {
         return endIndex - 1;
     }
-
 
     public enum CandleType {
         OPEN, CLOSE
