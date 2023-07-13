@@ -45,7 +45,7 @@ public class Config {
             THREAD_NUM = Integer.parseInt(prop.getProperty("THREAD_NUM"));
             CANDLE_NUM = Integer.parseInt(prop.getProperty("CANDLE_NUM"));
         } catch (Exception e) {
-            System.out.println("Exception: " + e);
+            e.printStackTrace();
         }
     }
 }

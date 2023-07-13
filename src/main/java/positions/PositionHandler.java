@@ -107,7 +107,8 @@ public class PositionHandler implements Serializable {
             TelegramMessenger.send(symbol, "bought again:  " + buyOrder);
             clientOrderId = buyOrder.getClientOrderId();
             orderID = buyOrder.getOrderId();
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -175,9 +176,9 @@ public class PositionHandler implements Serializable {
                 log.info("{}. Order is empty", sellingInstructions.getType());
                 TelegramMessenger.send(symbol, "Not done. " + sellingInstructions.getType());
             }
-        } catch (Exception ex) {
-            log.info(ex.toString());
+        } catch (Exception e) {
             TelegramMessenger.send(symbol, "Exception happened");
+            e.printStackTrace();
         }
     }
 

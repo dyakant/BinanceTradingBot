@@ -31,8 +31,8 @@ public class TelegramMessenger {
             URL url = new URL(urlString);
             URLConnection conn = url.openConnection();
             InputStream is = new BufferedInputStream(conn.getInputStream());
-        } catch (Exception ex) {
-            System.out.println("Exception while sending message to Telegram: " + ex);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
