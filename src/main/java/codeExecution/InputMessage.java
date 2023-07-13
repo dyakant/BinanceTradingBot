@@ -25,12 +25,21 @@ public class InputMessage {
             case RealTImeOperations.GET_OPEN_ORDERS:
 
             case RealTImeOperations.GET_CURRENT_BALANCE:
+
+            case RealTImeOperations.SHOW_STRATEGIES:
+                if (messageParts.length != 2) {
+                    System.out.println("provide necessary parameters");
+                    operation = RealTImeOperations.UNKNOWN_OPERATION;
+                    break;
+                }
                 symbol = messageParts[1];
                 if (!BinanceInfo.isSymbolExists(symbol)) {
                     System.out.println("Wrong symbol");
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                 }
                 break;
+
+            case RealTImeOperations.SHOW_ALL_STRATEGIES:
 
             case RealTImeOperations.CLOSE_ALL_POSITIONS:
 
@@ -42,21 +51,26 @@ public class InputMessage {
             case RealTImeOperations.ACTIVATE_STRATEGY:
 
             case RealTImeOperations.DEACTIVATE_STRATEGY:
-                entryStrategy = stringToEntryStrategy(messageParts[2]);
-                symbol = messageParts[1];
-                interval = null;
-                for (CandlestickInterval candlestickInterval : CandlestickInterval.values()) {
-                    if (candlestickInterval.toString().equals(messageParts[3])) interval = candlestickInterval;
+                if (messageParts.length != 4) {
+                    System.out.println("provide necessary parameters");
+                    operation = RealTImeOperations.UNKNOWN_OPERATION;
+                    break;
                 }
+                symbol = messageParts[1];
+                if (!BinanceInfo.isSymbolExists(symbol)) {
+                    System.out.println("Wrong symbol");
+                    operation = RealTImeOperations.UNKNOWN_OPERATION;
+                    break;
+                }
+                entryStrategy = stringToEntryStrategy(messageParts[2]);
                 if (entryStrategy == null) {
                     System.out.println("This strategy don't exists");
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                     break;
                 }
-                if (!BinanceInfo.isSymbolExists(symbol)) {
-                    System.out.println("Wrong symbol");
-                    operation = RealTImeOperations.UNKNOWN_OPERATION;
-                    break;
+                interval = null;
+                for (CandlestickInterval candlestickInterval : CandlestickInterval.values()) {
+                    if (candlestickInterval.toString().equals(messageParts[3])) interval = candlestickInterval;
                 }
                 if (interval == null) {
                     System.out.println("Wrong interval");
@@ -72,6 +86,8 @@ public class InputMessage {
                         cap - Close all open positions
                         as [symbol] [strategy] [interval] - For [symbol] activate strategy [strategy] and candlestick interval [interval]
                         ds [symbol] [strategy] [interval] - For [symbol] deactivate strategy [strategy] and candlestick interval [interval]
+                        ss [symbol] - Show all strategies for [symbol]
+                        sas - Show all strategies
                         glt [symbol] - Get last trades for [symbol]
                         gop - get all Open positions
                         goo [symbol] - Get all open orders for [symbol]

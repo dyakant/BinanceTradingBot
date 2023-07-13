@@ -80,8 +80,25 @@ public class RealTimeCommandOperator {
             investmentManagerHashMapLock.readLock().lock();
             if (investmentManagerHashMap.containsKey(pair)) {
                 investmentManagerHashMap.get(pair).removeEntryStrategy(message.getEntryStrategy());
-                investmentManagerHashMapLock.readLock().unlock();
             }
+            investmentManagerHashMapLock.readLock().unlock();
+        });
+
+        commandsAndOps.put(RealTImeOperations.SHOW_STRATEGIES, (message) -> {
+            investmentManagerHashMapLock.readLock().lock();
+            investmentManagerHashMap.entrySet().stream()
+                    .filter((k) -> k.getKey().getKey().equals(message.getSymbol()))
+                    .forEach(o ->
+                            System.out.println(o.getKey() + ": " + o.getValue().getStrategyName() + " / " + o.getKey().getValue())
+                    );
+            investmentManagerHashMapLock.readLock().unlock();
+        });
+
+        commandsAndOps.put(RealTImeOperations.SHOW_ALL_STRATEGIES, (message) -> {
+            investmentManagerHashMapLock.readLock().lock();
+            investmentManagerHashMap.forEach((key, value) ->
+                    System.out.println(key.getKey() + ": " + value.getStrategyName() + " / " + key.getValue()));
+            investmentManagerHashMapLock.readLock().unlock();
         });
 
         commandsAndOps.put(RealTImeOperations.GET_LAST_TRADES, (message) -> {

@@ -18,6 +18,7 @@ import java.util.concurrent.Future;
 public class InvestmentManager implements Runnable {
     private final CandlestickInterval interval;
     private final String symbol;
+    private final String strategyName;
     ConcurrentLinkedDeque<EntryStrategy> entryStrategies;
     ConcurrentLinkedDeque<PositionHandler> positionHandlers;
     ConcurrentLinkedDeque<Future<?>> futures;
@@ -26,6 +27,7 @@ public class InvestmentManager implements Runnable {
     public InvestmentManager(CandlestickInterval interval, String symbol, EntryStrategy entryStrategy) {
         this.interval = interval;
         this.symbol = symbol;
+        strategyName = entryStrategy.getName();
         entryStrategies = new ConcurrentLinkedDeque<>();
         positionHandlers = new ConcurrentLinkedDeque<>();
         futures = new ConcurrentLinkedDeque<>();
@@ -70,4 +72,7 @@ public class InvestmentManager implements Runnable {
         entryStrategies.remove(entryStrategy);
     }
 
+    public String getStrategyName() {
+        return strategyName;
+    }
 }
