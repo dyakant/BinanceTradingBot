@@ -4,7 +4,10 @@ import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.SMAIndicator;
-import strategies.macdOverRSIStrategies.MACDOverRSIConstants;
+
+import static data.DataHolder.CandleType.OPEN;
+import static data.DataHolder.CrossType.UP;
+import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.SIGNAL_LENGTH;
 
 public class DataHolder {
     private final Double currentPrice;
@@ -23,25 +26,21 @@ public class DataHolder {
         this.macdOverRsiCloseValue = getMacdOverRsiValueAtIndex(endIndex - 1);
     }
 
-    public double getMacdOverRsiCloseValue() {
-        return macdOverRsiCloseValue;
-    }
-
     public boolean above(IndicatorType indicatorType, CandleType type, int threshold) {
         if (indicatorType == IndicatorType.RSI) {
-            if (type == CandleType.OPEN) {
+            if (type == OPEN) {
                 return getRsiOpenValue() > threshold;
             } else {
                 return getRsiCloseValue() > threshold;
             }
         } else if (indicatorType == IndicatorType.MACD_OVER_RSI) {
-            if (type == CandleType.OPEN) {
+            if (type == OPEN) {
                 return getMacdOverRsiValueAtIndex(endIndex) > threshold;
             } else {
                 return getMacdOverRsiValueAtIndex(endIndex - 1) > threshold;
             }
         } else {
-            if (type == CandleType.OPEN) {
+            if (type == OPEN) {
                 return getSMAValueAtIndex(endIndex) > threshold;
             } else {
                 return getSMAValueAtIndex(endIndex - 1) > threshold;
@@ -66,7 +65,7 @@ public class DataHolder {
     }
 
     private double getMacdOverRsiSignalLineValueAtIndex(int index) {
-        EMAIndicator signal = new EMAIndicator(macdOverRsiIndicator, MACDOverRSIConstants.SIGNAL_LENGTH);
+        EMAIndicator signal = new EMAIndicator(macdOverRsiIndicator, SIGNAL_LENGTH);
         return signal.getValue(index).doubleValue();
     }
 
@@ -74,17 +73,30 @@ public class DataHolder {
         return smaIndicator.getValue(index).doubleValue();
     }
 
+    private boolean macdOverRsiCrossed(CrossType crossType, CandleType candleType, double threshold) {
+        boolean isCandleTypeOpen = candleType == OPEN;
+        double currentMacdOverRsiValue = isCandleTypeOpen
+                ? getMacdOverRsiValueAtIndex(getLastIndex())
+                : macdOverRsiCloseValue;
+        double prevMacdOverRsiValue = isCandleTypeOpen
+                ? macdOverRsiCloseValue
+                : getMacdOverRsiValueAtIndex(getLastBeforeLastCloseIndex());
+        return crossType == UP
+                ? currentMacdOverRsiValue > threshold && prevMacdOverRsiValue <= threshold
+                : currentMacdOverRsiValue < threshold && prevMacdOverRsiValue >= threshold;
+    }
+
     private boolean rsiCrossed(CrossType crossType, CandleType candleType, double threshold) {
-        double rsiValueNow, rsiValuePrev;
-        if (candleType == CandleType.OPEN) {
-            rsiValueNow = getRsiOpenValue();
-            rsiValuePrev = getRsiCloseValue();
-        } else {
-            rsiValueNow = getRsiCloseValue();
-            rsiValuePrev = getRSIValueAtIndex(endIndex - 2);
-        }
-        if (crossType == CrossType.UP) return rsiValueNow > threshold && rsiValuePrev <= threshold;
-        return rsiValuePrev >= threshold && rsiValueNow < threshold;
+        boolean isCandleTypeOpen = candleType == OPEN;
+        double rsiValueNow = isCandleTypeOpen
+                ? getRsiOpenValue()
+                : getRsiCloseValue();
+        double rsiValuePrev = isCandleTypeOpen
+                ? getRsiCloseValue()
+                : getRSIValueAtIndex(getLastBeforeLastCloseIndex());
+        return crossType == UP
+                ? rsiValueNow > threshold && rsiValuePrev <= threshold
+                : rsiValueNow < threshold && rsiValuePrev >= threshold;
     }
 
     public double getRsiOpenValue() {
@@ -92,28 +104,19 @@ public class DataHolder {
     }
 
     public double getRsiCloseValue() {
-        return rsiIndicator.getValue(endIndex - 1).doubleValue();
+        return rsiIndicator.getValue(getLastCloseIndex()).doubleValue();
     }
 
     public double getRSIValueAtIndex(int index) {
         return rsiIndicator.getValue(index).doubleValue();
     }
 
-    private boolean macdOverRsiCrossed(CrossType crossType, CandleType candleType, double threshold) {
-        double currentMacdOverRsiValue, prevMacdOverRsiValue;
-        if (candleType == CandleType.OPEN) {
-            currentMacdOverRsiValue = getMacdOverRsiValueAtIndex(endIndex);
-            prevMacdOverRsiValue = macdOverRsiCloseValue;
-        } else {
-            currentMacdOverRsiValue = macdOverRsiCloseValue;
-            prevMacdOverRsiValue = getMacdOverRsiValueAtIndex(endIndex - 2);
-        }
-        if (crossType == CrossType.UP) return currentMacdOverRsiValue > threshold && prevMacdOverRsiValue <= threshold;
-        return prevMacdOverRsiValue >= threshold && currentMacdOverRsiValue < threshold;
-    }
-
     public synchronized Double getCurrentPrice() {
         return currentPrice;
+    }
+
+    public double getMacdOverRsiCloseValue() {
+        return macdOverRsiCloseValue;
     }
 
     public int getLastIndex() {
@@ -122,6 +125,10 @@ public class DataHolder {
 
     public int getLastCloseIndex() {
         return endIndex - 1;
+    }
+
+    public int getLastBeforeLastCloseIndex() {
+        return endIndex - 2;
     }
 
     public enum CandleType {
