@@ -8,6 +8,7 @@ import data.RealTimeData;
 import positions.PositionHandler;
 import singletonHelpers.ExecService;
 import singletonHelpers.SubClient;
+import singletonHelpers.TelegramMessenger;
 import strategies.EntryStrategy;
 
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -55,6 +56,7 @@ public class InvestmentManager implements Runnable {
                         for (EntryStrategy entryStrategy : entryStrategies) {
                             PositionHandler positionHandler = entryStrategy.run(dataHolder, symbol);
                             if (positionHandler != null) {
+                                TelegramMessenger.send(symbol, "Order executed by the strategy '" + entryStrategy.getName() + " / " + interval + "'");
                                 positionHandlers.add(positionHandler);
                             }
                         }
