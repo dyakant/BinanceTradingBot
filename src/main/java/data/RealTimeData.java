@@ -11,16 +11,16 @@ import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.SMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import singletonHelpers.RequestClient;
-import strategies.macdOverRSIStrategies.MACDOverRSIConstants;
 import strategies.rsiStrategies.RSIConstants;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.*;
+
 //* For us, in realTimeData, the last candle is always open. The previous ones are closed.
 public class RealTimeData {
-
     private Long lastCandleOpenTime;
     private BaseBarSeries realTimeData;
     private double currentPrice;
@@ -28,7 +28,6 @@ public class RealTimeData {
     private MACDIndicator macdOverRsiIndicator;
     private SMAIndicator smaIndicator;
     private int updateCounter = 0;
-
 
     public RealTimeData(String symbol, CandlestickInterval interval) {
         realTimeData = new BaseBarSeries();
@@ -39,7 +38,6 @@ public class RealTimeData {
         fillRealTimeData(candlestickBars);
         calculateIndicators();
     }
-
 
     /**
      * Receives the current candlestick - usually an open one.
@@ -53,7 +51,9 @@ public class RealTimeData {
     public synchronized DataHolder updateData(CandlestickEvent event) {
         boolean isNewCandle = updateLastCandle(event);
         updateCounter += 1;
-        if (!isNewCandle && updateCounter != 20) return null;
+        if (!isNewCandle && updateCounter != 20) {
+            return null;
+        }
         updateCounter = 0;
         calculateIndicators();
         return new DataHolder(currentPrice, rsiIndicator, macdOverRsiIndicator, smaIndicator, realTimeData.getEndIndex());
@@ -82,8 +82,7 @@ public class RealTimeData {
     private void fillRealTimeData(List<Candlestick> candlestickBars) {
         for (Candlestick candlestickBar : candlestickBars) {
             ZonedDateTime closeTime = utils.Utils.getZonedDateTime(candlestickBar.getCloseTime());
-            Duration candleDuration = Duration.ofMillis(candlestickBar.getCloseTime()
-                    - candlestickBar.getOpenTime());
+            Duration candleDuration = Duration.ofMillis(candlestickBar.getCloseTime() - candlestickBar.getOpenTime());
             double open = candlestickBar.getOpen().doubleValue();
             double high = candlestickBar.getHigh().doubleValue();
             double low = candlestickBar.getLow().doubleValue();
@@ -96,30 +95,30 @@ public class RealTimeData {
     private void calculateIndicators() {
         rsiIndicator = calculateRSI(RSIConstants.RSI_CANDLE_NUM);
         macdOverRsiIndicator = calculateMacdOverRsi();
-        smaIndicator = new SMAIndicator(new ClosePriceIndicator(realTimeData), MACDOverRSIConstants.SMA_CANDLE_NUM);
+        smaIndicator = new SMAIndicator(new ClosePriceIndicator(realTimeData), SMA_CANDLE_NUM);
     }
 
-    public double getMacdOverRsiSignalLineValueAtIndex(int index) {
-        EMAIndicator signal = new EMAIndicator(macdOverRsiIndicator, MACDOverRSIConstants.SIGNAL_LENGTH);
-        return signal.getValue(index).doubleValue();
+    private RSIIndicator calculateRSI(int candleNum) {
+        ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(realTimeData);
+        return new RSIIndicator(closePriceIndicator, candleNum);
     }
 
-    public double getMacdOverRsiMacdLineValueAtIndex(int index) {
-        return macdOverRsiIndicator.getValue(index).doubleValue();
+    private MACDIndicator calculateMacdOverRsi() {
+        RSIIndicator rsiIndicator14 = calculateRSI(RSI_CANDLE_NUM);
+        return new MACDIndicator(rsiIndicator14, FAST_BAR_COUNT, SLOW_BAR_COUNT);
     }
 
     public double getMacdOverRsiValueAtIndex(int index) {
         return getMacdOverRsiMacdLineValueAtIndex(index) - getMacdOverRsiSignalLineValueAtIndex(index);
     }
 
-    private MACDIndicator calculateMacdOverRsi() {
-        RSIIndicator rsiIndicator14 = calculateRSI(MACDOverRSIConstants.RSI_CANDLE_NUM);
-        return new MACDIndicator(rsiIndicator14, MACDOverRSIConstants.FAST_BAR_COUNT, MACDOverRSIConstants.SLOW_BAR_COUNT);
+    private double getMacdOverRsiMacdLineValueAtIndex(int index) {
+        return macdOverRsiIndicator.getValue(index).doubleValue();
     }
 
-    private RSIIndicator calculateRSI(int candleNum) {
-        ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(realTimeData);
-        return new RSIIndicator(closePriceIndicator, candleNum);
+    private double getMacdOverRsiSignalLineValueAtIndex(int index) {
+        EMAIndicator signal = new EMAIndicator(macdOverRsiIndicator, SIGNAL_LENGTH);
+        return signal.getValue(index).doubleValue();
     }
 
     public double getCurrentPrice() {
