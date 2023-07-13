@@ -108,19 +108,6 @@ public class RealTimeData {
         return new MACDIndicator(rsiIndicator14, FAST_BAR_COUNT, SLOW_BAR_COUNT);
     }
 
-    public double getMacdOverRsiValueAtIndex(int index) {
-        return getMacdOverRsiMacdLineValueAtIndex(index) - getMacdOverRsiSignalLineValueAtIndex(index);
-    }
-
-    private double getMacdOverRsiMacdLineValueAtIndex(int index) {
-        return macdOverRsiIndicator.getValue(index).doubleValue();
-    }
-
-    private double getMacdOverRsiSignalLineValueAtIndex(int index) {
-        EMAIndicator signal = new EMAIndicator(macdOverRsiIndicator, SIGNAL_LENGTH);
-        return signal.getValue(index).doubleValue();
-    }
-
     public double getCurrentPrice() {
         return currentPrice;
     }
