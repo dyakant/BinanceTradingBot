@@ -1,11 +1,11 @@
 package strategies.macdOverRSIStrategies.Short;
 
 import data.DataHolder;
-import positions.PositionHandler;
 import positions.SellingInstructions;
-import singletonHelpers.TelegramMessenger;
 import strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
-import strategies.macdOverRSIStrategies.MACDOverRSIConstants;
+
+import static positions.PositionHandler.ClosePositionTypes.CLOSE_SHORT_MARKET;
+import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE;
 
 public class MACDOverRSIShortExitStrategy1 extends MACDOverRSIBaseExitStrategy {
 
@@ -13,8 +13,7 @@ public class MACDOverRSIShortExitStrategy1 extends MACDOverRSIBaseExitStrategy {
     public SellingInstructions run(DataHolder realTimeData) {
         boolean currentPriceAboveSMA = realTimeData.getSMAValueAtIndex(realTimeData.getLastCloseIndex()) < realTimeData.getCurrentPrice();
         if (currentPriceAboveSMA) {
-            TelegramMessenger.send("exiting position with short exit 1");
-            return new SellingInstructions(PositionHandler.ClosePositionTypes.CLOSE_SHORT_MARKET, MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
+            return new SellingInstructions(CLOSE_SHORT_MARKET, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE, this.getClass().getName());
         }
         return null;
     }

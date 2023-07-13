@@ -1,15 +1,14 @@
 package strategies.macdOverRSIStrategies.Short;
 
 import data.DataHolder;
-import positions.PositionHandler;
 import positions.SellingInstructions;
-import singletonHelpers.TelegramMessenger;
 import strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
-import strategies.macdOverRSIStrategies.MACDOverRSIConstants;
 import utils.Trailer;
 
-public class MACDOverRSIShortExitStrategy5 extends MACDOverRSIBaseExitStrategy {
+import static positions.PositionHandler.ClosePositionTypes.CLOSE_SHORT_MARKET;
+import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE;
 
+public class MACDOverRSIShortExitStrategy5 extends MACDOverRSIBaseExitStrategy {
     private boolean isTrailing = false;
     private final Trailer trailer;
 
@@ -26,8 +25,7 @@ public class MACDOverRSIShortExitStrategy5 extends MACDOverRSIBaseExitStrategy {
         } else {
             trailer.updateTrailer(currentPrice);
             if (trailer.needToSell(currentPrice)) {
-                TelegramMessenger.send("trailing position with short exit 5");
-                return new SellingInstructions(PositionHandler.ClosePositionTypes.CLOSE_SHORT_MARKET, MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
+                return new SellingInstructions(CLOSE_SHORT_MARKET, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE, this.getClass().getName());
             }
         }
         return null;

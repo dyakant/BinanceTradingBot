@@ -1,11 +1,11 @@
 package strategies.rsiStrategies;
 
 import data.DataHolder;
-import positions.PositionHandler;
 import positions.SellingInstructions;
-import singletonHelpers.TelegramMessenger;
 import strategies.ExitStrategy;
 
+import static positions.PositionHandler.ClosePositionTypes.SELL_LIMIT;
+import static strategies.rsiStrategies.RSIConstants.RSI_EXIT_OPTION_3_SELLING_PERCENTAGE;
 
 public class RSIExitStrategy3 implements ExitStrategy {
     private double rsiValueTwoBefore = -1.0;
@@ -22,13 +22,12 @@ public class RSIExitStrategy3 implements ExitStrategy {
             updateValues(realTimeData.getRsiCloseValue());
         }
         if (lostValueOf15(rsiValueBefore, rsiValue)) {
-            TelegramMessenger.send("Exiting with RSI exit strategy 3. Returning 100(1)");
-            return new SellingInstructions(PositionHandler.ClosePositionTypes.SELL_LIMIT, RSIConstants.RSI_EXIT_OPTION_3_SELLING_PERCENTAGE);
+            return new SellingInstructions(SELL_LIMIT, RSI_EXIT_OPTION_3_SELLING_PERCENTAGE, this.getClass().getName());
 
         }
         if (rsiValueTwoBefore != -1.0 && lostValueOf15(rsiValueTwoBefore, rsiValue)) {
-            TelegramMessenger.send("Exiting with RSI exit strategy 3. Returning 100(2)");
-            return new SellingInstructions(PositionHandler.ClosePositionTypes.SELL_LIMIT, RSIConstants.RSI_EXIT_OPTION_3_SELLING_PERCENTAGE);
+            //TODO: no logs, no different, same result
+            return new SellingInstructions(SELL_LIMIT, RSI_EXIT_OPTION_3_SELLING_PERCENTAGE, this.getClass().getName());
         }
         return null;
     }

@@ -1,20 +1,23 @@
 package strategies.macdOverRSIStrategies.Short;
 
 import data.DataHolder;
-import positions.PositionHandler;
 import positions.SellingInstructions;
-import singletonHelpers.TelegramMessenger;
 import strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
-import strategies.macdOverRSIStrategies.MACDOverRSIConstants;
+
+import static data.DataHolder.CandleType.OPEN;
+import static data.DataHolder.CrossType.UP;
+import static data.DataHolder.IndicatorType.MACD_OVER_RSI;
+import static positions.PositionHandler.ClosePositionTypes.CLOSE_SHORT_LIMIT;
+import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE;
+import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.SHORT_EXIT2_OPEN_THRESHOLD;
 
 public class MACDOverRSIShortExitStrategy2 extends MACDOverRSIBaseExitStrategy {
 
     @Override
     public SellingInstructions run(DataHolder realTimeData) {
-        boolean openCrossed03 = realTimeData.crossed(DataHolder.IndicatorType.MACD_OVER_RSI, DataHolder.CrossType.UP, DataHolder.CandleType.OPEN, MACDOverRSIConstants.SHORT_EXIT2_OPEN_THRESHOLD);
+        boolean openCrossed03 = realTimeData.crossed(MACD_OVER_RSI, UP, OPEN, SHORT_EXIT2_OPEN_THRESHOLD);
         if (openCrossed03) {
-            TelegramMessenger.send("exiting position with short exit 2");
-            return new SellingInstructions(PositionHandler.ClosePositionTypes.CLOSE_SHORT_LIMIT, MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
+            return new SellingInstructions(CLOSE_SHORT_LIMIT, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE, this.getClass().getName());
         }
         return null;
     }

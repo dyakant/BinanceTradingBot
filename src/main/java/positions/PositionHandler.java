@@ -1,11 +1,13 @@
 package positions;
 
 import com.binance.client.SyncRequestClient;
-import com.binance.client.model.enums.*;
+import com.binance.client.model.enums.CandlestickInterval;
+import com.binance.client.model.enums.OrderSide;
 import com.binance.client.model.trade.Order;
 import data.AccountBalance;
 import data.Config;
 import data.DataHolder;
+import lombok.extern.slf4j.Slf4j;
 import singletonHelpers.BinanceInfo;
 import singletonHelpers.RequestClient;
 import singletonHelpers.TelegramMessenger;
@@ -14,7 +16,19 @@ import utils.Utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Objects;
 
+import static com.binance.client.model.enums.NewOrderRespType.RESULT;
+import static com.binance.client.model.enums.OrderSide.BUY;
+import static com.binance.client.model.enums.OrderSide.SELL;
+import static com.binance.client.model.enums.OrderType.LIMIT;
+import static com.binance.client.model.enums.OrderType.MARKET;
+import static com.binance.client.model.enums.PositionSide.BOTH;
+import static com.binance.client.model.enums.TimeInForce.GTC;
+import static com.binance.client.model.enums.WorkingType.MARK_PRICE;
+import static data.Config.REDUCE_ONLY;
+
+@Slf4j
 public class PositionHandler implements Serializable {
     private String clientOrderId;
     private Long orderID;
@@ -44,6 +58,7 @@ public class PositionHandler implements Serializable {
         for (ExitStrategy exitStrategy : exitStrategies) {
             SellingInstructions sellingInstructions = exitStrategy.run(realTimeData);
             if ((!isSelling) && sellingInstructions != null) {
+                TelegramMessenger.send(symbol, "close position by the strategy " + sellingInstructions);
                 isSelling = true;
                 closePosition(sellingInstructions, realTimeData);
                 break;
@@ -87,8 +102,8 @@ public class PositionHandler implements Serializable {
             SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
             syncRequestClient.cancelAllOpenOrder(symbol);
             OrderSide side = stringToOrderSide(order.getSide());
-            Order buyOrder = syncRequestClient.postOrder(symbol, side, null, OrderType.MARKET, null,
-                    order.getOrigQty().toString(), null, null, null, null, null, null, null, null, WorkingType.MARK_PRICE.toString(), NewOrderRespType.RESULT);
+            Order buyOrder = syncRequestClient.postOrder(symbol, side, null, MARKET, null,
+                    order.getOrigQty().toString(), null, null, null, null, null, null, null, null, MARK_PRICE.toString(), RESULT);
             TelegramMessenger.send(symbol, "bought again:  " + buyOrder);
             clientOrderId = buyOrder.getClientOrderId();
             orderID = buyOrder.getOrderId();
@@ -119,51 +134,50 @@ public class PositionHandler implements Serializable {
     private void closePosition(SellingInstructions sellingInstructions, DataHolder realTimeData) {
         SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
         String sellingQty = Utils.fixQuantity(BinanceInfo.formatQty(percentageOfQuantity(sellingInstructions.getSellingQtyPercentage()), symbol));
-        switch (sellingInstructions.getType()) {
+        try {
+            Order order = null;
+            String currentPrice = realTimeData.getCurrentPrice().toString();
+            switch (sellingInstructions.getType()) {
 
-            case STAY_IN_POSITION:
-                break;
+                case STAY_IN_POSITION:
+                    break;
 
-            case SELL_LIMIT:
-                try {
-                    syncRequestClient.postOrder(symbol, OrderSide.SELL, PositionSide.BOTH, OrderType.LIMIT, TimeInForce.GTC,
-                            sellingQty, realTimeData.getCurrentPrice().toString(), Config.REDUCE_ONLY, null, null, null, null, null, null, WorkingType.MARK_PRICE.toString(), NewOrderRespType.RESULT);
-                    TelegramMessenger.send(symbol, "Selling price:  " + realTimeData.getCurrentPrice());
-                } catch (Exception ignored) {
-                }
-                break;
+                case SELL_LIMIT:
+                    order = syncRequestClient.postOrder(symbol, SELL, BOTH, LIMIT, GTC, sellingQty, currentPrice,
+                            REDUCE_ONLY, null, null, null, null,
+                            null, MARK_PRICE, null, RESULT);
+                    break;
 
-            case SELL_MARKET:
-                try {
-                    syncRequestClient.postOrder(symbol, OrderSide.SELL, PositionSide.BOTH, OrderType.MARKET, null,
-                            sellingQty, null, Config.REDUCE_ONLY, null, null, null, null, null, null, null, NewOrderRespType.RESULT);
-                    TelegramMessenger.send(symbol, "Selling price:  " + realTimeData.getCurrentPrice());
-                } catch (Exception ignored) {
-                }
-                break;
+                case SELL_MARKET:
+                    order = syncRequestClient.postOrder(symbol, SELL, BOTH, MARKET, null, sellingQty, null,
+                            REDUCE_ONLY, null, null, null, null,
+                            null, null, null, RESULT);
+                    break;
 
+                case CLOSE_SHORT_LIMIT:
+                    order = syncRequestClient.postOrder(symbol, BUY, BOTH, LIMIT, GTC, sellingQty, currentPrice,
+                            REDUCE_ONLY, null, null, null, null,
+                            null, MARK_PRICE, null, RESULT);
+                    break;
 
-            case CLOSE_SHORT_LIMIT:
-                try {
-                    syncRequestClient.postOrder(symbol, OrderSide.BUY, PositionSide.BOTH, OrderType.LIMIT, TimeInForce.GTC,
-                            sellingQty, realTimeData.getCurrentPrice().toString(), Config.REDUCE_ONLY, null, null, null, null, null, null, WorkingType.MARK_PRICE.toString(), NewOrderRespType.RESULT);
-                    TelegramMessenger.send(symbol, "Selling price:  " + realTimeData.getCurrentPrice().toString());
-                } catch (Exception ignored) {
-                }
-                break;
+                case CLOSE_SHORT_MARKET:
+                    order = syncRequestClient.postOrder(symbol, BUY, BOTH, MARKET, null, sellingQty, null,
+                            REDUCE_ONLY, null, null, null, null,
+                            null, null, null, RESULT);
+                    break;
 
-            case CLOSE_SHORT_MARKET:
-                try {
-                    syncRequestClient.postOrder(symbol, OrderSide.BUY, PositionSide.BOTH, OrderType.MARKET, null,
-                            sellingQty, null, Config.REDUCE_ONLY, null, null, null, null, null, null, null, NewOrderRespType.RESULT);
-                    TelegramMessenger.send(symbol, "Selling price:  " + realTimeData.getCurrentPrice().toString());
-                } catch (Exception ignored) {
-                }
-                break;
-
-
-            default:
-
+                default:
+            }
+            if (Objects.nonNull(order)) {
+                log.info("{}. order: {}", sellingInstructions.getType(), order);
+                TelegramMessenger.send(symbol, "Selling price:  " + currentPrice);
+            } else {
+                log.info("{}. Order is empty", sellingInstructions.getType());
+                TelegramMessenger.send(symbol, "Not done. " + sellingInstructions.getType());
+            }
+        } catch (Exception ex) {
+            log.info(ex.toString());
+            TelegramMessenger.send(symbol, "Exception happened");
         }
     }
 

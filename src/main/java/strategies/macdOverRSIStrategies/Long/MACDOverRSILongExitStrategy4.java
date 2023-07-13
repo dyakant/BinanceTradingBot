@@ -1,12 +1,12 @@
 package strategies.macdOverRSIStrategies.Long;
 
 import data.DataHolder;
-import positions.PositionHandler;
 import positions.SellingInstructions;
-import singletonHelpers.TelegramMessenger;
 import strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
-import strategies.macdOverRSIStrategies.MACDOverRSIConstants;
 import utils.Trailer;
+
+import static positions.PositionHandler.ClosePositionTypes.SELL_LIMIT;
+import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE;
 
 public class MACDOverRSILongExitStrategy4 extends MACDOverRSIBaseExitStrategy {
 
@@ -27,9 +27,7 @@ public class MACDOverRSILongExitStrategy4 extends MACDOverRSIBaseExitStrategy {
                 return null;
             }
             if (trailer.needToSell(currentPrice)) {
-                TelegramMessenger.send("trailing position with long exit 4");
-                return new SellingInstructions(PositionHandler.ClosePositionTypes.SELL_LIMIT,
-                        MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
+                return new SellingInstructions(SELL_LIMIT, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE, this.getClass().getName());
             }
         } else {
             if (stayInTrackAndThreeNegativeHistograms(realTimeData)) {
