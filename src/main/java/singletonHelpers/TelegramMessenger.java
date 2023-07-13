@@ -9,6 +9,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.regex.Pattern;
 
 public class TelegramMessenger {
     private static final String apiToken = Config.TELEGRAM_API_TOKEN;
@@ -16,11 +17,11 @@ public class TelegramMessenger {
     private static final String PARSE_MODE = "MarkdownV2";
 
     public static void send(String symbol, String text) {
-        sendToTelegram("*" + symbol.toUpperCase() + "* " + text.replaceAll("[\\W]", "\\\\$0"));
+        sendToTelegram("*" + symbol.toUpperCase() + "* " + getEscapedText(text));
     }
 
     public static void send(String text) {
-        sendToTelegram(text.replaceAll("[\\W]", "\\\\$0"));
+        sendToTelegram(getEscapedText(text));
     }
 
     private static synchronized void sendToTelegram(String text) {
@@ -37,7 +38,12 @@ public class TelegramMessenger {
 
     @NotNull
     private static String prepareMessage(String text) {
-        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd hh:mm:ss")).replaceAll("[\\W]", "\\\\$0");
-        return "_\\[" + currentTime + "\\]_ " + text;
+        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss"));
+        return "_\\[" + getEscapedText(currentTime) + "\\]_ " + text;
+    }
+
+    private static String getEscapedText(String text) {
+        Pattern SPECIAL_REGEX_CHARS = Pattern.compile("[{}()\\[\\]_~`>#-=!.+*?^$\\\\|]");
+        return SPECIAL_REGEX_CHARS.matcher(text).replaceAll("\\\\$0");
     }
 }

@@ -69,8 +69,8 @@ public class RealTimeCommandOperator {
                 InvestmentManager investmentManager = new InvestmentManager(message.getInterval(), message.getSymbol(), message.getEntryStrategy());
                 investmentManagerHashMap.put(pair, investmentManager);
                 investmentManagerHashMapLock.writeLock().unlock();
-                TelegramMessenger.send(message.getSymbol(), "activate strategy " + message.getEntryStrategy().getName() +
-                        "/" + message.getInterval() + ", balance: " + AccountBalance.getAccountBalance().getCoinBalance("usdt"));
+                TelegramMessenger.send(message.getSymbol(), "activate strategy '" + message.getEntryStrategy().getName() +
+                        " / " + message.getInterval() + "', balance: " + AccountBalance.getAccountBalance().getCoinBalance("usdt"));
                 investmentManager.run();
             }
         });
