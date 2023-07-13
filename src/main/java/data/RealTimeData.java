@@ -1,7 +1,5 @@
 package data;
 
-import strategies.macdOverRSIStrategies.MACDOverRSIConstants;
-import strategies.rsiStrategies.RSIConstants;
 import com.binance.client.SyncRequestClient;
 import com.binance.client.model.enums.CandlestickInterval;
 import com.binance.client.model.event.CandlestickEvent;
@@ -13,14 +11,15 @@ import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.SMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import singletonHelpers.RequestClient;
+import strategies.macdOverRSIStrategies.MACDOverRSIConstants;
+import strategies.rsiStrategies.RSIConstants;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 //* For us, in realTimeData, the last candle is always open. The previous ones are closed.
-public class RealTimeData{
+public class RealTimeData {
 
     private Long lastCandleOpenTime;
     private BaseBarSeries realTimeData;
@@ -31,12 +30,12 @@ public class RealTimeData{
     private int updateCounter = 0;
 
 
-    public RealTimeData(String symbol, CandlestickInterval interval){
+    public RealTimeData(String symbol, CandlestickInterval interval) {
         realTimeData = new BaseBarSeries();
         SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
         List<Candlestick> candlestickBars = syncRequestClient.getCandlestick(symbol, interval, null, null, Config.CANDLE_NUM);
         lastCandleOpenTime = candlestickBars.get(candlestickBars.size() - 1).getOpenTime();
-        currentPrice = candlestickBars.get(candlestickBars.size() -1).getClose().doubleValue();
+        currentPrice = candlestickBars.get(candlestickBars.size() - 1).getClose().doubleValue();
         fillRealTimeData(candlestickBars);
         calculateIndicators();
     }
@@ -48,12 +47,13 @@ public class RealTimeData{
      * of realTimeData and erase the first. If the candle is open - delete the last one from real time data and push the new one.
      * Calculates the RSIIndicators in either case - to get the most accurate data.
      * to realTimeData
+     *
      * @param event - the new Candlestick received from the subscribeCandleStickEvent.
      */
-    public synchronized DataHolder updateData(CandlestickEvent event){
+    public synchronized DataHolder updateData(CandlestickEvent event) {
         boolean isNewCandle = updateLastCandle(event);
         updateCounter += 1;
-        if (! isNewCandle && updateCounter != 20) return null;
+        if (!isNewCandle && updateCounter != 20) return null;
         updateCounter = 0;
         calculateIndicators();
         return new DataHolder(currentPrice, rsiIndicator, macdOverRsiIndicator, smaIndicator, realTimeData.getEndIndex());
@@ -70,17 +70,16 @@ public class RealTimeData{
         double close = event.getClose().doubleValue();
         double volume = event.getVolume().doubleValue();
         lastCandleOpenTime = event.getStartTime();
-        if (isNewCandle){
+        if (isNewCandle) {
             realTimeData = realTimeData.getSubSeries(1, realTimeData.getEndIndex() + 1);
-        }
-        else{
+        } else {
             realTimeData = realTimeData.getSubSeries(0, realTimeData.getEndIndex());
         }
         realTimeData.addBar(candleDuration, closeTime, open, high, low, close, volume);
         return isNewCandle;
     }
 
-    private void fillRealTimeData(List<Candlestick> candlestickBars){
+    private void fillRealTimeData(List<Candlestick> candlestickBars) {
         for (Candlestick candlestickBar : candlestickBars) {
             ZonedDateTime closeTime = utils.Utils.getZonedDateTime(candlestickBar.getCloseTime());
             Duration candleDuration = Duration.ofMillis(candlestickBar.getCloseTime()

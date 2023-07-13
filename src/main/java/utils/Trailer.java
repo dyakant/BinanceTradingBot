@@ -2,8 +2,6 @@ package utils;
 
 import com.binance.client.model.enums.PositionSide;
 
-import java.math.BigDecimal;
-
 public class Trailer {
 
     private double absoluteMaxPrice;
@@ -14,26 +12,24 @@ public class Trailer {
 
     Double trailingPercentage;
 
-    public Trailer(double currentPrice, Double trailingPercentage, PositionSide side){
+    public Trailer(double currentPrice, Double trailingPercentage, PositionSide side) {
         absoluteMaxPrice = currentPrice;
         this.side = side;
         this.trailingPercentage = trailingPercentage;
-        if(side == PositionSide.LONG){
+        if (side == PositionSide.LONG) {
             exitPrice = calculateLongTrailingExitPrices(absoluteMaxPrice, trailingPercentage);
-        }
-        else{
+        } else {
             exitPrice = calculateShortTrailingExitPrices(absoluteMaxPrice, trailingPercentage);
         }
     }
 
-    public void updateTrailer(double currentPrice){
-        if(side == PositionSide.LONG) {
+    public void updateTrailer(double currentPrice) {
+        if (side == PositionSide.LONG) {
             if (currentPrice > absoluteMaxPrice) {
                 absoluteMaxPrice = currentPrice;
                 exitPrice = calculateLongTrailingExitPrices(absoluteMaxPrice, trailingPercentage);
             }
-        }
-        else{
+        } else {
             if (currentPrice < absoluteMaxPrice) {
                 absoluteMaxPrice = currentPrice;
                 exitPrice = calculateShortTrailingExitPrices(absoluteMaxPrice, trailingPercentage);
@@ -41,7 +37,7 @@ public class Trailer {
         }
     }
 
-    public boolean needToSell(double currentPrice){
+    public boolean needToSell(double currentPrice) {
         if (side == PositionSide.LONG) return currentPrice <= exitPrice;
         else return currentPrice >= exitPrice;
     }
@@ -51,7 +47,7 @@ public class Trailer {
     }
 
     private double calculateLongTrailingExitPrices(double highestPrice, Double trailingPercentage) {
-            return highestPrice - (highestPrice * trailingPercentage / 100);
+        return highestPrice - (highestPrice * trailingPercentage / 100);
     }
 
     public double getAbsoluteMaxPrice() {

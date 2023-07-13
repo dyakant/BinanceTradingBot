@@ -8,8 +8,8 @@ import java.net.URL;
 import java.net.URLConnection;
 
 public class TelegramMessenger {
-    private static String apiToken = Config.TELEGRAM_API_TOKEN;
-    private static String chatId = Config.TELEGRAM_CHAT_ID;
+    private static final String apiToken = Config.TELEGRAM_API_TOKEN;
+    private static final String chatId = Config.TELEGRAM_CHAT_ID;
 
     public static synchronized void sendToTelegram(String text) {
         String urlString = "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s";
@@ -19,6 +19,7 @@ public class TelegramMessenger {
             URL url = new URL(urlString);
             URLConnection conn = url.openConnection();
             InputStream is = new BufferedInputStream(conn.getInputStream());
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 }

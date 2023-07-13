@@ -1,19 +1,24 @@
 package codeExecution;
 
-import data.AccountBalance;
-import data.Config;
-import singletonHelpers.ExecService;
-import singletonHelpers.RequestClient;
 import com.binance.client.SyncRequestClient;
-import com.binance.client.model.enums.*;
+import com.binance.client.model.enums.CandlestickInterval;
+import com.binance.client.model.enums.NewOrderRespType;
+import com.binance.client.model.enums.OrderSide;
+import com.binance.client.model.enums.OrderType;
 import com.binance.client.model.trade.MyTrade;
 import com.binance.client.model.trade.Order;
 import com.binance.client.model.trade.Position;
+import data.AccountBalance;
+import data.Config;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import singletonHelpers.ExecService;
+import singletonHelpers.RequestClient;
 import singletonHelpers.SubClient;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -42,12 +47,12 @@ public class RealTimeCommandOperator {
             List<Position> openPositions = AccountBalance.getAccountBalance().getOpenPositions();
             for (Position openPosition : openPositions) {
                 SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
-                if (! openPosition.getPositionSide().equals("SHORT")) {
+                if (!openPosition.getPositionSide().equals("SHORT")) {
                     syncRequestClient.postOrder(openPosition.getSymbol().toLowerCase(), OrderSide.SELL, null, OrderType.MARKET, null,
-                            openPosition.getPositionAmt().toString(), null, Config.REDUCE_ONLY, null, null, null,null,null, null, null, NewOrderRespType.RESULT);
+                            openPosition.getPositionAmt().toString(), null, Config.REDUCE_ONLY, null, null, null, null, null, null, null, NewOrderRespType.RESULT);
                 } else {
                     syncRequestClient.postOrder(openPosition.getSymbol().toLowerCase(), OrderSide.BUY, null, OrderType.MARKET, null,
-                            openPosition.getPositionAmt().toString(), null, Config.REDUCE_ONLY, null, null, null,null,null, null, null, NewOrderRespType.RESULT);
+                            openPosition.getPositionAmt().toString(), null, Config.REDUCE_ONLY, null, null, null, null, null, null, null, NewOrderRespType.RESULT);
                 }
             }
         });
@@ -79,7 +84,7 @@ public class RealTimeCommandOperator {
 
         commandsAndOps.put(RealTImeOperations.GET_LAST_TRADES, (message) -> {
             SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
-            List<MyTrade> myTrades = syncRequestClient.getAccountTrades(message.getSymbol(),null,null,null, 100);
+            List<MyTrade> myTrades = syncRequestClient.getAccountTrades(message.getSymbol(), null, null, null, 100);
             int index = 1;
             for (MyTrade trade : myTrades) {
                 System.out.println("Trade " + index + ": " + trade);
@@ -131,8 +136,7 @@ public class RealTimeCommandOperator {
                 InputMessage message = awaitingMessages.poll();
                 if (message == null) {
                     awaitingMessages.wait();
-                }
-                else {
+                } else {
                     if (commandsAndOps.containsKey(message.getOperation())) {
                         commandsAndOps.get(message.getOperation()).run(message);
                     }
@@ -140,21 +144,23 @@ public class RealTimeCommandOperator {
             }
         }
     }
-    private class KeyboardReader implements Runnable{
+
+    private class KeyboardReader implements Runnable {
         public void run() {
-            Scanner scan= new Scanner(System.in);
+            Scanner scan = new Scanner(System.in);
             while (true) {
                 try {
                     InputMessage message = new InputMessage();
+                    System.out.print("# ");
                     String input = scan.nextLine();
                     message.initialize(input);
                     String messageOperation = message.getOperation();
-                    if (! messageOperation.equals(RealTImeOperations.UNKNOWN_OPERATION)){
+                    if (!messageOperation.equals(RealTImeOperations.UNKNOWN_OPERATION)) {
                         synchronized (awaitingMessages) {
                             awaitingMessages.add(message);
                             awaitingMessages.notifyAll();
                         }
-                        if (messageOperation.equals(RealTImeOperations.CLOSE_PROGRAM))break;
+                        if (messageOperation.equals(RealTImeOperations.CLOSE_PROGRAM)) break;
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -162,5 +168,4 @@ public class RealTimeCommandOperator {
             }
         }
     }
-
 }

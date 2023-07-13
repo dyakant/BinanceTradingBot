@@ -1,9 +1,9 @@
-import data.*;
-import singletonHelpers.BinanceInfo;
 import codeExecution.RealTimeCommandOperator;
+import data.AccountBalance;
+import data.Config;
+import singletonHelpers.BinanceInfo;
 import singletonHelpers.TelegramMessenger;
 
-import java.time.ZonedDateTime;
 import java.util.Date;
 
 public class Main {
@@ -13,7 +13,7 @@ public class Main {
         BinanceInfo binanceInfo = BinanceInfo.getBinanceInfo();
         RealTimeCommandOperator realTimeCommandOperator = new RealTimeCommandOperator();
         TelegramMessenger.sendToTelegram("Start running: " + new Date(System.currentTimeMillis()));
-        System.out.println(Config.CANDLE_NUM);
+        System.out.println("#");
         try {
             realTimeCommandOperator.run();
         } catch (InterruptedException e) {

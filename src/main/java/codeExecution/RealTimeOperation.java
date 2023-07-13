@@ -1,5 +1,5 @@
 package codeExecution;
 
-public interface RealTimeOperation{
+public interface RealTimeOperation {
     void run(InputMessage message);
 }

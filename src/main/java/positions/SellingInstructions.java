@@ -1,7 +1,5 @@
 package positions;
 
-import java.math.BigDecimal;
-
 public class SellingInstructions {
     private PositionHandler.ClosePositionTypes type;
     private double sellingQtyPercentage;

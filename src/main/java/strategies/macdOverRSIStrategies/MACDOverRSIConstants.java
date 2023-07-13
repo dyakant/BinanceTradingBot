@@ -1,14 +1,12 @@
 package strategies.macdOverRSIStrategies;
 
-import java.math.BigDecimal;
-
 public class MACDOverRSIConstants {
     public static final int FAST_BAR_COUNT = 14;
     public static final int SLOW_BAR_COUNT = 24;
     public static final double TAKE_PROFIT_PERCENTAGE = 0.0;
     public static final double STOP_LOSS_PERCENTAGE = 0.0;
-    public static final int LEVERAGE = 60;
-    public static final double BUYING_AMOUNT = 20;
+    public static final int LEVERAGE = 2;
+    public static final double BUYING_AMOUNT = 5;
     public static final int SIGNAL_LENGTH = 9;
     public static final int RSI_CANDLE_NUM = 9;
     public static final int SMA_CANDLE_NUM = 100;

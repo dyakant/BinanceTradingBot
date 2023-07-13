@@ -1,12 +1,10 @@
 package codeExecution;
 
+import com.binance.client.model.enums.CandlestickInterval;
 import singletonHelpers.BinanceInfo;
 import strategies.EntryStrategy;
 import strategies.macdOverRSIStrategies.MACDOverRSIEntryStrategy;
 import strategies.rsiStrategies.RSIEntryStrategy;
-import com.binance.client.model.enums.CandlestickInterval;
-
-import java.math.BigDecimal;
 
 public class InputMessage {
     public String operation = RealTImeOperations.UNKNOWN_OPERATION;
@@ -17,7 +15,7 @@ public class InputMessage {
     private String secretKey;
 
     public void initialize(String input) {
-        String [] messageParts = input.split(" ");
+        String[] messageParts = input.split(" ");
         operation = messageParts[0];
         switch (operation) {
             case RealTImeOperations.CANCEL_ALL_ORDERS:
@@ -28,7 +26,7 @@ public class InputMessage {
 
             case RealTImeOperations.GET_CURRENT_BALANCE:
                 symbol = messageParts[1];
-                if (!BinanceInfo.isSymbolExists(symbol)){
+                if (!BinanceInfo.isSymbolExists(symbol)) {
                     System.out.println("Wrong symbol");
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                 }
@@ -47,20 +45,20 @@ public class InputMessage {
                 entryStrategy = stringToEntryStrategy(messageParts[1]);
                 symbol = messageParts[2];
                 interval = null;
-                for (CandlestickInterval candlestickInterval: CandlestickInterval.values()){
+                for (CandlestickInterval candlestickInterval : CandlestickInterval.values()) {
                     if (candlestickInterval.toString().equals(messageParts[3])) interval = candlestickInterval;
                 }
-                if (entryStrategy == null){
+                if (entryStrategy == null) {
                     System.out.println("This strategy don't exists");
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                     break;
                 }
-                if (!BinanceInfo.isSymbolExists(symbol)){
+                if (!BinanceInfo.isSymbolExists(symbol)) {
                     System.out.println("Wrong symbol");
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                     break;
                 }
-                if (interval == null){
+                if (interval == null) {
                     System.out.println("Wrong interval");
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                     break;
