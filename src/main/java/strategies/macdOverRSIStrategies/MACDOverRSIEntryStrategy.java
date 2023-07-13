@@ -73,14 +73,14 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
     private PositionHandler buyAndCreatePositionHandler(Double currentPrice, String symbol, PositionSide positionSide) {
         bought = true;
         if (positionSide == PositionSide.LONG) {
-            TelegramMessenger.sendToTelegram("buying long for " + symbol);
+            TelegramMessenger.send(symbol, "buying long...");
             try {
                 SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
                 syncRequestClient.changeInitialLeverage(symbol, leverage);
                 String buyingQty = utils.Utils.getBuyingQtyAsString(currentPrice, symbol, leverage, requestedBuyingAmount);
                 Order buyOrder = syncRequestClient.postOrder(symbol, OrderSide.BUY, null, OrderType.LIMIT, TimeInForce.GTC,
                         buyingQty, currentPrice.toString(), null, null, null, null, null, null, WorkingType.MARK_PRICE, null, NewOrderRespType.RESULT);
-                TelegramMessenger.sendToTelegram("buying long: buyOrder: " + buyOrder);
+                TelegramMessenger.send(symbol, "buyOrder: " + buyOrder);
                 ArrayList<ExitStrategy> exitStrategies = new ArrayList<>();
                 exitStrategies.add(new MACDOverRSILongExitStrategy1());
                 exitStrategies.add(new MACDOverRSILongExitStrategy2());
@@ -93,14 +93,14 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
             }
         } else {
             try {
-                TelegramMessenger.sendToTelegram("buying short for " + symbol);
+                TelegramMessenger.send(symbol, "buying short...");
                 System.out.println("buying short " + symbol + " by price " + currentPrice);
                 SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
                 syncRequestClient.changeInitialLeverage(symbol, leverage);
                 String buyingQty = utils.Utils.getBuyingQtyAsString(currentPrice, symbol, leverage, requestedBuyingAmount);
                 Order buyOrder = syncRequestClient.postOrder(symbol, OrderSide.SELL, null, OrderType.LIMIT, TimeInForce.GTC,
                         buyingQty, currentPrice.toString(), null, null, null, null, null, null, null, WorkingType.MARK_PRICE.toString(), NewOrderRespType.RESULT);
-                TelegramMessenger.sendToTelegram("buying short: buyOrder: " + buyOrder);
+                TelegramMessenger.send(symbol, "buyOrder: " + buyOrder);
                 ArrayList<ExitStrategy> exitStrategies = new ArrayList<>();
                 exitStrategies.add(new MACDOverRSIShortExitStrategy1());
                 exitStrategies.add(new MACDOverRSIShortExitStrategy2());

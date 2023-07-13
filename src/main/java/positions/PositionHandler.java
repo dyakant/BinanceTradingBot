@@ -89,7 +89,7 @@ public class PositionHandler implements Serializable {
             OrderSide side = stringToOrderSide(order.getSide());
             Order buyOrder = syncRequestClient.postOrder(symbol, side, null, OrderType.MARKET, null,
                     order.getOrigQty().toString(), null, null, null, null, null, null, null, null, WorkingType.MARK_PRICE.toString(), NewOrderRespType.RESULT);
-            TelegramMessenger.sendToTelegram("bought again:  " + buyOrder);
+            TelegramMessenger.send(symbol, "bought again:  " + buyOrder);
             clientOrderId = buyOrder.getClientOrderId();
             orderID = buyOrder.getOrderId();
         } catch (Exception ignored) {
@@ -112,7 +112,7 @@ public class PositionHandler implements Serializable {
             terminated = true;
             SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
             syncRequestClient.cancelAllOpenOrder(symbol);
-            TelegramMessenger.sendToTelegram("Position closed!, balance:  " + AccountBalance.getAccountBalance().getCoinBalance("usdt"));
+            TelegramMessenger.send(symbol, "Position closed!, balance:  " + AccountBalance.getAccountBalance().getCoinBalance("usdt"));
         }
     }
 
@@ -128,7 +128,7 @@ public class PositionHandler implements Serializable {
                 try {
                     syncRequestClient.postOrder(symbol, OrderSide.SELL, PositionSide.BOTH, OrderType.LIMIT, TimeInForce.GTC,
                             sellingQty, realTimeData.getCurrentPrice().toString(), Config.REDUCE_ONLY, null, null, null, null, null, null, WorkingType.MARK_PRICE.toString(), NewOrderRespType.RESULT);
-                    TelegramMessenger.sendToTelegram("Selling price:  " + realTimeData.getCurrentPrice());
+                    TelegramMessenger.send(symbol, "Selling price:  " + realTimeData.getCurrentPrice());
                 } catch (Exception ignored) {
                 }
                 break;
@@ -137,7 +137,7 @@ public class PositionHandler implements Serializable {
                 try {
                     syncRequestClient.postOrder(symbol, OrderSide.SELL, PositionSide.BOTH, OrderType.MARKET, null,
                             sellingQty, null, Config.REDUCE_ONLY, null, null, null, null, null, null, null, NewOrderRespType.RESULT);
-                    TelegramMessenger.sendToTelegram("Selling price:  " + realTimeData.getCurrentPrice());
+                    TelegramMessenger.send(symbol, "Selling price:  " + realTimeData.getCurrentPrice());
                 } catch (Exception ignored) {
                 }
                 break;
@@ -147,7 +147,7 @@ public class PositionHandler implements Serializable {
                 try {
                     syncRequestClient.postOrder(symbol, OrderSide.BUY, PositionSide.BOTH, OrderType.LIMIT, TimeInForce.GTC,
                             sellingQty, realTimeData.getCurrentPrice().toString(), Config.REDUCE_ONLY, null, null, null, null, null, null, WorkingType.MARK_PRICE.toString(), NewOrderRespType.RESULT);
-                    TelegramMessenger.sendToTelegram("Selling price:  " + realTimeData.getCurrentPrice().toString());
+                    TelegramMessenger.send(symbol, "Selling price:  " + realTimeData.getCurrentPrice().toString());
                 } catch (Exception ignored) {
                 }
                 break;
@@ -156,7 +156,7 @@ public class PositionHandler implements Serializable {
                 try {
                     syncRequestClient.postOrder(symbol, OrderSide.BUY, PositionSide.BOTH, OrderType.MARKET, null,
                             sellingQty, null, Config.REDUCE_ONLY, null, null, null, null, null, null, null, NewOrderRespType.RESULT);
-                    TelegramMessenger.sendToTelegram("Selling price:  " + realTimeData.getCurrentPrice().toString());
+                    TelegramMessenger.send(symbol, "Selling price:  " + realTimeData.getCurrentPrice().toString());
                 } catch (Exception ignored) {
                 }
                 break;

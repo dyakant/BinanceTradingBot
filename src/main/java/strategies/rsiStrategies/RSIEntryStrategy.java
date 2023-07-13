@@ -53,7 +53,7 @@ public class RSIEntryStrategy implements EntryStrategy {
                 syncRequestClient.changeInitialLeverage(symbol, leverage);
                 String buyingQty = Utils.getBuyingQtyAsString(realTimeData.getCurrentPrice(), symbol, leverage, requestedBuyingAmount);
                 try {
-                    TelegramMessenger.sendToTelegram("buying long for " + symbol);
+                    TelegramMessenger.send(symbol, "buying long...");
                     Order buyOrder = syncRequestClient.postOrder(symbol, OrderSide.BUY, null, OrderType.MARKET, null,
                             buyingQty, null, null, null, null, null, null, null, WorkingType.MARK_PRICE, null, NewOrderRespType.RESULT);
                     String takeProfitPrice = Utils.getTakeProfitPriceAsString(realTimeData, symbol, takeProfitPercentage);
@@ -62,7 +62,7 @@ public class RSIEntryStrategy implements EntryStrategy {
                     String stopLossPrice = Utils.getStopLossPriceAsString(realTimeData, symbol, stopLossPercentage);
                     syncRequestClient.postOrder(symbol, OrderSide.SELL, null, OrderType.STOP, TimeInForce.GTC,
                             buyingQty, stopLossPrice, null, null, stopLossPrice, null, null, null, WorkingType.MARK_PRICE, null, NewOrderRespType.RESULT);
-                    TelegramMessenger.sendToTelegram("Buy order: " + buyOrder);
+                    TelegramMessenger.send(symbol, "buy order: " + buyOrder);
                     ArrayList<ExitStrategy> exitStrategies = new ArrayList<>();
                     exitStrategies.add(new RSIExitStrategy1());
                     exitStrategies.add(new RSIExitStrategy2());
