@@ -15,6 +15,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import singletonHelpers.ExecService;
 import singletonHelpers.RequestClient;
 import singletonHelpers.SubClient;
+import singletonHelpers.TelegramMessenger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 
 public class RealTimeCommandOperator {
     private final HashMap<String, RealTimeOperation> commandsAndOps;
@@ -69,6 +69,8 @@ public class RealTimeCommandOperator {
                 InvestmentManager investmentManager = new InvestmentManager(message.getInterval(), message.getSymbol(), message.getEntryStrategy());
                 investmentManagerHashMap.put(pair, investmentManager);
                 investmentManagerHashMapLock.writeLock().unlock();
+                TelegramMessenger.send(message.getSymbol(), "activate strategy " + message.getEntryStrategy().getName() +
+                        "/" + message.getInterval() + ", balance: " + AccountBalance.getAccountBalance().getCoinBalance("usdt"));
                 investmentManager.run();
             }
         });

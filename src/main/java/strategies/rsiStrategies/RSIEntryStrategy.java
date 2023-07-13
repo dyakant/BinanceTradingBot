@@ -15,6 +15,7 @@ import utils.Utils;
 import java.util.ArrayList;
 
 public class RSIEntryStrategy implements EntryStrategy {
+    public final String NAME = "rsi";
     double takeProfitPercentage = RSIConstants.TAKE_PROFIT_PERCENTAGE;
     private double stopLossPercentage = RSIConstants.STOP_LOSS_PERCENTAGE;
     private int leverage = RSIConstants.LEVERAGE;
@@ -91,5 +92,10 @@ public class RSIEntryStrategy implements EntryStrategy {
 
     public void setRequestedBuyingAmount(double requestedBuyingAmount) {
         this.requestedBuyingAmount = requestedBuyingAmount;
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
     }
 }
