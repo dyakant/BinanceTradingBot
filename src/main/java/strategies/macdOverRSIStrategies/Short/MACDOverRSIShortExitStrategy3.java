@@ -27,7 +27,7 @@ public class MACDOverRSIShortExitStrategy3 extends MACDOverRSIBaseExitStrategy {
                 return null;
             }
             if (trailer.needToSell(currentPrice)) {
-                TelegramMessenger.sendToTelegram("trailing position with short exit 3");
+                TelegramMessenger.send("trailing position with short exit 3");
                 return new SellingInstructions(PositionHandler.ClosePositionTypes.CLOSE_SHORT_LIMIT,
                         MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
             }

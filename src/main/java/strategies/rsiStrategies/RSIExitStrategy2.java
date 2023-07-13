@@ -24,7 +24,7 @@ public class RSIExitStrategy2 implements ExitStrategy {
             return null;
         } else if (positionInStrategy == PositionInStrategy.POSITION_TWO) {
             if (!realTimeData.above(DataHolder.IndicatorType.RSI, DataHolder.CandleType.CLOSE, RSIConstants.RSI_EXIT_OPTION_2_UNDER_THRESHOLD1)) {
-                TelegramMessenger.sendToTelegram(this.getClass().getSimpleName() + "Switching to Position 3. Returning 40% ");
+                TelegramMessenger.send(this.getClass().getSimpleName() + "Switching to Position 3. Returning 40% ");
                 positionInStrategy = PositionInStrategy.POSITION_THREE;
                 return new SellingInstructions(PositionHandler.ClosePositionTypes.SELL_LIMIT, RSIConstants.RSI_EXIT_OPTION_2_SELLING_PERCENTAGE1);
 
@@ -32,7 +32,7 @@ public class RSIExitStrategy2 implements ExitStrategy {
         } else if (positionInStrategy == PositionInStrategy.POSITION_THREE) {
             if (!realTimeData.above(DataHolder.IndicatorType.RSI, DataHolder.CandleType.CLOSE, RSIConstants.RSI_EXIT_OPTION_2_UNDER_THRESHOLD2)) {
                 positionInStrategy = PositionInStrategy.POSITION_ONE;
-                TelegramMessenger.sendToTelegram(this.getClass().getSimpleName() + "Switching to Position 1. Returning 100% ");
+                TelegramMessenger.send(this.getClass().getSimpleName() + "Switching to Position 1. Returning 100% ");
                 return new SellingInstructions(PositionHandler.ClosePositionTypes.SELL_LIMIT, RSIConstants.RSI_EXIT_OPTION_2_SELLING_PERCENTAGE2);
             }
         }

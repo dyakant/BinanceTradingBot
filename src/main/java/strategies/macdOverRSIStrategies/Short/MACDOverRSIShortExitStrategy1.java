@@ -13,7 +13,7 @@ public class MACDOverRSIShortExitStrategy1 extends MACDOverRSIBaseExitStrategy {
     public SellingInstructions run(DataHolder realTimeData) {
         boolean currentPriceAboveSMA = realTimeData.getSMAValueAtIndex(realTimeData.getLastCloseIndex()) < realTimeData.getCurrentPrice();
         if (currentPriceAboveSMA) {
-            TelegramMessenger.sendToTelegram("exiting position with short exit 1");
+            TelegramMessenger.send("exiting position with short exit 1");
             return new SellingInstructions(PositionHandler.ClosePositionTypes.CLOSE_SHORT_MARKET, MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
         }
         return null;

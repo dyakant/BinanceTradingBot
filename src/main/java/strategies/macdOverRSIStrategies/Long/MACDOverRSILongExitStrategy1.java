@@ -13,7 +13,7 @@ public class MACDOverRSILongExitStrategy1 extends MACDOverRSIBaseExitStrategy {
     public SellingInstructions run(DataHolder realTimeData) {
         boolean currentPriceBelowSMA = realTimeData.getSMAValueAtIndex(realTimeData.getLastIndex() - 1) > realTimeData.getCurrentPrice();
         if (currentPriceBelowSMA) {
-            TelegramMessenger.sendToTelegram("exiting position with long exit 1");
+            TelegramMessenger.send("exiting position with long exit 1");
             return new SellingInstructions(PositionHandler.ClosePositionTypes.SELL_MARKET, MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
         }
         return null;

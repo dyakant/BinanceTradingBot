@@ -26,7 +26,7 @@ public class MACDOverRSILongExitStrategy5 extends MACDOverRSIBaseExitStrategy {
         } else {
             trailer.updateTrailer(currentPrice);
             if (trailer.needToSell(currentPrice)) {
-                TelegramMessenger.sendToTelegram("trailing position with long exit 5");
+                TelegramMessenger.send("trailing position with long exit 5");
                 return new SellingInstructions(PositionHandler.ClosePositionTypes.SELL_MARKET, MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
             }
         }
