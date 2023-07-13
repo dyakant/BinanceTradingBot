@@ -8,8 +8,6 @@ import strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
 import strategies.macdOverRSIStrategies.MACDOverRSIConstants;
 import utils.Trailer;
 
-import java.util.Date;
-
 public class MACDOverRSILongExitStrategy5 extends MACDOverRSIBaseExitStrategy {
 
     private boolean isTrailing = false;
@@ -28,7 +26,7 @@ public class MACDOverRSILongExitStrategy5 extends MACDOverRSIBaseExitStrategy {
         } else {
             trailer.updateTrailer(currentPrice);
             if (trailer.needToSell(currentPrice)) {
-                TelegramMessenger.sendToTelegram("trailing position with long exit 5: " + new Date(System.currentTimeMillis()));
+                TelegramMessenger.sendToTelegram("trailing position with long exit 5");
                 return new SellingInstructions(PositionHandler.ClosePositionTypes.SELL_MARKET, MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
             }
         }

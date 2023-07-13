@@ -17,7 +17,6 @@ import utils.Trailer;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 
 public class MACDOverRSIEntryStrategy implements EntryStrategy {
     double takeProfitPercentage = MACDOverRSIConstants.TAKE_PROFIT_PERCENTAGE;
@@ -74,14 +73,14 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
     private PositionHandler buyAndCreatePositionHandler(Double currentPrice, String symbol, PositionSide positionSide) {
         bought = true;
         if (positionSide == PositionSide.LONG) {
-            TelegramMessenger.sendToTelegram("buying long: " + new Date(System.currentTimeMillis()));
+            TelegramMessenger.sendToTelegram("buying long for " + symbol);
             try {
                 SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
                 syncRequestClient.changeInitialLeverage(symbol, leverage);
                 String buyingQty = utils.Utils.getBuyingQtyAsString(currentPrice, symbol, leverage, requestedBuyingAmount);
                 Order buyOrder = syncRequestClient.postOrder(symbol, OrderSide.BUY, null, OrderType.LIMIT, TimeInForce.GTC,
                         buyingQty, currentPrice.toString(), null, null, null, null, null, null, WorkingType.MARK_PRICE, null, NewOrderRespType.RESULT);
-                TelegramMessenger.sendToTelegram("buying long: buyOrder: " + buyOrder + new Date(System.currentTimeMillis()));
+                TelegramMessenger.sendToTelegram("buying long: buyOrder: " + buyOrder);
                 ArrayList<ExitStrategy> exitStrategies = new ArrayList<>();
                 exitStrategies.add(new MACDOverRSILongExitStrategy1());
                 exitStrategies.add(new MACDOverRSILongExitStrategy2());
@@ -94,14 +93,14 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
             }
         } else {
             try {
-                TelegramMessenger.sendToTelegram("buying short: " + new Date(System.currentTimeMillis()));
+                TelegramMessenger.sendToTelegram("buying short for " + symbol);
                 System.out.println("buying short " + symbol + " by price " + currentPrice);
                 SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
                 syncRequestClient.changeInitialLeverage(symbol, leverage);
                 String buyingQty = utils.Utils.getBuyingQtyAsString(currentPrice, symbol, leverage, requestedBuyingAmount);
                 Order buyOrder = syncRequestClient.postOrder(symbol, OrderSide.SELL, null, OrderType.LIMIT, TimeInForce.GTC,
                         buyingQty, currentPrice.toString(), null, null, null, null, null, null, null, WorkingType.MARK_PRICE.toString(), NewOrderRespType.RESULT);
-                TelegramMessenger.sendToTelegram("buying short: buyOrder: " + buyOrder + new Date(System.currentTimeMillis()));
+                TelegramMessenger.sendToTelegram("buying short: buyOrder: " + buyOrder);
                 ArrayList<ExitStrategy> exitStrategies = new ArrayList<>();
                 exitStrategies.add(new MACDOverRSIShortExitStrategy1());
                 exitStrategies.add(new MACDOverRSIShortExitStrategy2());

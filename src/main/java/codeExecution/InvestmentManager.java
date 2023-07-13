@@ -11,7 +11,6 @@ import singletonHelpers.SubClient;
 import singletonHelpers.TelegramMessenger;
 import strategies.EntryStrategy;
 
-import java.util.Date;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -37,7 +36,7 @@ public class InvestmentManager implements Runnable {
         RealTimeData realTimeData = new RealTimeData(symbol, interval);
         SubscriptionClient subscriptionClient = SubClient.getSubClient().getSubscriptionClient();
         ExecutorService iterationExecutorService = ExecService.getExecService().getExecutorService();
-        TelegramMessenger.sendToTelegram(symbol + " balance:  " + AccountBalance.getAccountBalance().getCoinBalance("usdt") + ", " + new Date(System.currentTimeMillis()));
+        TelegramMessenger.sendToTelegram(symbol + " balance:  " + AccountBalance.getAccountBalance().getCoinBalance("usdt"));
 
         subscriptionClient.subscribeCandlestickEvent(symbol, interval,
                 ((event) -> iterationExecutorService.execute(() -> {
