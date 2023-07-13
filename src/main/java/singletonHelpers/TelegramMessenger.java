@@ -14,13 +14,13 @@ public class TelegramMessenger {
     private static final String chatId = Config.TELEGRAM_CHAT_ID;
 
     public static void send(String symbol, String text) {
-        sendToTelegram("<b>" + symbol.toUpperCase() + "</b> " + text);
+        sendToTelegram("*" + symbol.toUpperCase() + "* " + text);
     }
 
     public static synchronized void sendToTelegram(String text) {
         String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd hh:mm:ss"));
-        String message = "<i>[" + currentTime + "]</i> " + text;
-        String urlString = "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s&parse_mode=HTML";
+        String message = "_[" + currentTime + "]_ " + text;
+        String urlString = "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s&parse_mode=Markdown";
         urlString = String.format(urlString, apiToken, chatId, message);
 
         try {
