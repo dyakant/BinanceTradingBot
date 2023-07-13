@@ -15,7 +15,7 @@ public class MACDOverRSIShortExitStrategy2 extends MACDOverRSIBaseExitStrategy {
 
     @Override
     public SellingInstructions run(DataHolder realTimeData) {
-        boolean openCrossed03 = realTimeData.crossed(MACD_OVER_RSI, UP, OPEN, SHORT_EXIT2_OPEN_THRESHOLD);
+        boolean openCrossed03 = realTimeData.crossed(MACD_OVER_RSI, OPEN, UP, SHORT_EXIT2_OPEN_THRESHOLD);
         if (openCrossed03) {
             return new SellingInstructions(CLOSE_SHORT_LIMIT, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE, this.getClass().getName());
         }

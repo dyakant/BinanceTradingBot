@@ -48,10 +48,10 @@ public class DataHolder {
         }
     }
 
-    public boolean crossed(IndicatorType indicatorType, CrossType crossType, CandleType candleType, double threshold) {
+    public boolean crossed(IndicatorType indicatorType, CandleType candleType, CrossType crossType, double threshold) {
         return switch (indicatorType) {
-            case RSI -> rsiCrossed(crossType, candleType, threshold);
-            case MACD_OVER_RSI -> macdOverRsiCrossed(crossType, candleType, threshold);
+            case RSI -> rsiCrossed(candleType, crossType, threshold);
+            case MACD_OVER_RSI -> macdOverRsiCrossed(candleType, crossType, threshold);
             default -> true; // will not come to this!
         };
     }
@@ -73,27 +73,29 @@ public class DataHolder {
         return smaIndicator.getValue(index).doubleValue();
     }
 
-    private boolean macdOverRsiCrossed(CrossType crossType, CandleType candleType, double threshold) {
-        boolean isCandleTypeOpen = candleType == OPEN;
-        double currentMacdOverRsiValue = isCandleTypeOpen
-                ? getMacdOverRsiValueAtIndex(getLastIndex())
-                : macdOverRsiCloseValue;
-        double prevMacdOverRsiValue = isCandleTypeOpen
-                ? macdOverRsiCloseValue
-                : getMacdOverRsiValueAtIndex(getLastBeforeLastCloseIndex());
+    private boolean macdOverRsiCrossed(CandleType candleType, CrossType crossType, double threshold) {
+        double currentMacdOverRsiValue, prevMacdOverRsiValue;
+        if (candleType == OPEN) {
+            currentMacdOverRsiValue = getMacdOverRsiValueAtIndex(endIndex);
+            prevMacdOverRsiValue = macdOverRsiCloseValue;
+        } else {
+            currentMacdOverRsiValue = macdOverRsiCloseValue;
+            prevMacdOverRsiValue = getMacdOverRsiValueAtIndex(getLastBeforeLastCloseIndex());
+        }
         return crossType == UP
                 ? currentMacdOverRsiValue > threshold && prevMacdOverRsiValue <= threshold
                 : currentMacdOverRsiValue < threshold && prevMacdOverRsiValue >= threshold;
     }
 
-    private boolean rsiCrossed(CrossType crossType, CandleType candleType, double threshold) {
-        boolean isCandleTypeOpen = candleType == OPEN;
-        double rsiValueNow = isCandleTypeOpen
-                ? getRsiOpenValue()
-                : getRsiCloseValue();
-        double rsiValuePrev = isCandleTypeOpen
-                ? getRsiCloseValue()
-                : getRSIValueAtIndex(getLastBeforeLastCloseIndex());
+    private boolean rsiCrossed(CandleType candleType, CrossType crossType, double threshold) {
+        double rsiValueNow, rsiValuePrev;
+        if (candleType == OPEN) {
+            rsiValueNow = getRsiOpenValue();
+            rsiValuePrev = getRsiCloseValue();
+        } else {
+            rsiValueNow = getRsiCloseValue();
+            rsiValuePrev = getRSIValueAtIndex(getLastBeforeLastCloseIndex());
+        }
         return crossType == UP
                 ? rsiValueNow > threshold && rsiValuePrev <= threshold
                 : rsiValueNow < threshold && rsiValuePrev >= threshold;

@@ -60,36 +60,54 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
             SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
             boolean noOpenOrders = syncRequestClient.getOpenOrders(symbol).size() == ZERO;
             if (noOpenOrders) {
-                double currentPrice = realTimeData.getCurrentPrice();
-                boolean currentPriceAboveSMA = realTimeData.getSMAValueAtIndex(realTimeData.getLastIndex()) < currentPrice;
-                if (currentPriceAboveSMA) {
-                    boolean rule1 = realTimeData.crossed(MACD_OVER_RSI, UP, CLOSE, ZERO);
-                    if (rule1) {
-                        if (bought) return null;
-                        return buyAndCreatePositionHandler(symbol, currentPrice, LONG);
-                    } else {
-                        boolean macdValueBelowZero = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()) < ZERO;
-                        if (macdValueBelowZero && decliningPyramid(realTimeData, NEGATIVE)) {
-                            if (bought) return null;
-                            return buyAndCreatePositionHandler(symbol, currentPrice, LONG);
-                        }
-                    }
-                    bought = false;
-                } else {
-                    boolean rule1 = realTimeData.crossed(MACD_OVER_RSI, DOWN, CLOSE, ZERO);
-                    if (rule1) {
-                        if (bought) return null;
-                        return buyAndCreatePositionHandler(symbol, currentPrice, SHORT);
-                    } else {
-                        if (realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()) > ZERO
-                                && decliningPyramid(realTimeData, POSITIVE)) {
-                            if (bought) return null;
-                            return buyAndCreatePositionHandler(symbol, currentPrice, SHORT);
-                        }
-                    }
-                    bought = false;
+                return processDataWithRulesAndMakeOrder(realTimeData, symbol);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Правило 0: Цена выше SMA - лонг, ниже - шорт
+     * Правило 1: Если прошлая свеча по MACD пересекла RSI вверх - лонг
+     * Правило 2: Если MACD-RSI ниже 0 и MACD растёт - лонг
+     * Правило 3: Если прошлая свеча по MACD пересекла RSI вниз - шорт
+     * Правило 4: Если MACD-RSI выше 0 и MACD падает - шорт
+     *
+     * @param realTimeData - свежие данные
+     * @param symbol       - тикер
+     * @return - набор правил для закрытия позиции
+     */
+    private PositionHandler processDataWithRulesAndMakeOrder(DataHolder realTimeData, String symbol) {
+        double currentPrice = realTimeData.getCurrentPrice();
+        boolean isCurrentPriceAboveSMA = currentPrice > realTimeData.getSMAValueAtIndex(realTimeData.getLastIndex());
+        if (isCurrentPriceAboveSMA) {
+            boolean isPreviousMacdCandleCrossedRsiUp = realTimeData.crossed(MACD_OVER_RSI, CLOSE, UP, ZERO);
+            if (isPreviousMacdCandleCrossedRsiUp) {
+                if (bought) return null;
+                return buyAndCreatePositionHandler(symbol, currentPrice, LONG);
+            } else {
+                boolean macdValueBelowZero = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()) < ZERO;
+                boolean isMacdOverRsiGrows = decliningPyramid(realTimeData, NEGATIVE);
+                if (macdValueBelowZero && isMacdOverRsiGrows) {
+                    if (bought) return null;
+                    return buyAndCreatePositionHandler(symbol, currentPrice, LONG);
                 }
             }
+            bought = false;
+        } else {
+            boolean isPreviousMacdCandleCrossedRsiDown = realTimeData.crossed(MACD_OVER_RSI, CLOSE, DOWN, ZERO);
+            if (isPreviousMacdCandleCrossedRsiDown) {
+                if (bought) return null;
+                return buyAndCreatePositionHandler(symbol, currentPrice, SHORT);
+            } else {
+                boolean macdValueAboveZero = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()) > ZERO;
+                boolean isMacdOverRsiFall = decliningPyramid(realTimeData, POSITIVE);
+                if (macdValueAboveZero && isMacdOverRsiFall) {
+                    if (bought) return null;
+                    return buyAndCreatePositionHandler(symbol, currentPrice, SHORT);
+                }
+            }
+            bought = false;
         }
         return null;
     }
@@ -102,6 +120,7 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
             ArrayList<ExitStrategy> exitStrategies;
             String buyingQty = utils.Utils.getBuyingQtyAsString(currentPrice, symbol, leverage, requestedBuyingAmount);
             TelegramMessenger.send(symbol, "buying " + positionSide.toString().toLowerCase() + ": " + buyingQty + ", price " + currentPrice);
+            log.debug("{} {}, buyingQty={}, currentPrice={}", symbol, positionSide.toString().toLowerCase(), buyingQty, currentPrice);
             if (positionSide == LONG) {
                 buyOrder = postOrder(symbol, BUY, currentPrice, buyingQty);
                 exitStrategies = defineLongExitStrategy(currentPrice);
@@ -110,7 +129,6 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
                 exitStrategies = defineShortExitStrategy(currentPrice);
             }
             positionHandler = new PositionHandler(buyOrder, exitStrategies);
-            TelegramMessenger.send(symbol, "executed");
             log.info("{}, buyOrder: {}", symbol, buyOrder);
         } catch (Exception e) {
             e.printStackTrace();
@@ -187,6 +205,13 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
         return NAME;
     }
 
+    /**
+     * Сравнивает три точки, текущую, предыдущую и перед предыдущей
+     *
+     * @param realTimeData - реал-тайм данные
+     * @param type         - фаза
+     * @return - true для NEGATIVE при росте MACD и для POSITIVE при снижении MACD
+     */
     private boolean decliningPyramid(DataHolder realTimeData, DecliningType type) {
         boolean rule1;
         boolean rule2;

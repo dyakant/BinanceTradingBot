@@ -8,6 +8,10 @@ import utils.Trailer;
 import static positions.PositionHandler.ClosePositionTypes.SELL_LIMIT;
 import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE;
 
+/**
+ * Стратегия для закрытия позиции при лонге.
+ *
+ */
 public class MACDOverRSILongExitStrategy3 extends MACDOverRSIBaseExitStrategy {
     private boolean isTrailing = false;
     private final Trailer trailer;

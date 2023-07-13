@@ -25,6 +25,7 @@ import static com.binance.client.model.enums.OrderType.LIMIT;
 import static com.binance.client.model.enums.OrderType.MARKET;
 import static com.binance.client.model.enums.PositionSide.BOTH;
 import static com.binance.client.model.enums.TimeInForce.GTC;
+import static com.binance.client.model.enums.WorkingType.CONTRACT_PRICE;
 import static com.binance.client.model.enums.WorkingType.MARK_PRICE;
 import static data.Config.REDUCE_ONLY;
 
@@ -99,6 +100,7 @@ public class PositionHandler implements Serializable {
     private synchronized void rebuyOrder(DataHolder realTimeData, Order order) {
         rebuying = true;
         try {
+            log.debug("{} rebuyOrder, order={}", symbol, order);
             SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
             syncRequestClient.cancelAllOpenOrder(symbol);
             OrderSide side = stringToOrderSide(order.getSide());
@@ -138,6 +140,7 @@ public class PositionHandler implements Serializable {
         try {
             Order order = null;
             String currentPrice = realTimeData.getCurrentPrice().toString();
+            log.debug("{} closePosition with type {}", symbol, sellingInstructions.getType());
             switch (sellingInstructions.getType()) {
 
                 case STAY_IN_POSITION:
@@ -150,9 +153,9 @@ public class PositionHandler implements Serializable {
                     break;
 
                 case SELL_MARKET:
-                    order = syncRequestClient.postOrder(symbol, SELL, BOTH, MARKET, null, sellingQty, null,
+                    order = syncRequestClient.postOrder(symbol, SELL, BOTH, MARKET, GTC, sellingQty, null,
                             REDUCE_ONLY, null, null, null, null,
-                            null, null, null, RESULT);
+                            null, CONTRACT_PRICE, null, RESULT);
                     break;
 
                 case CLOSE_SHORT_LIMIT:
@@ -162,18 +165,18 @@ public class PositionHandler implements Serializable {
                     break;
 
                 case CLOSE_SHORT_MARKET:
-                    order = syncRequestClient.postOrder(symbol, BUY, BOTH, MARKET, null, sellingQty, null,
+                    order = syncRequestClient.postOrder(symbol, BUY, BOTH, MARKET, GTC, sellingQty, null,
                             REDUCE_ONLY, null, null, null, null,
-                            null, null, null, RESULT);
+                            null, CONTRACT_PRICE, null, RESULT);
                     break;
 
                 default:
             }
             if (Objects.nonNull(order)) {
-                log.info("{}. order: {}", sellingInstructions.getType(), order);
+                log.debug("{} position closed, order: {}", symbol, order);
                 TelegramMessenger.send(symbol, "Selling price:  " + currentPrice);
             } else {
-                log.info("{}. Order is empty", sellingInstructions.getType());
+                log.debug("{} position not closed, order is empty", symbol);
                 TelegramMessenger.send(symbol, "Not done. " + sellingInstructions.getType());
             }
         } catch (Exception e) {

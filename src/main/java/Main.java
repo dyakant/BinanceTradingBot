@@ -13,9 +13,7 @@ public class Main {
         BinanceInfo binanceInfo = BinanceInfo.getBinanceInfo();
         RealTimeCommandOperator realTimeCommandOperator = new RealTimeCommandOperator();
         TelegramMessenger.send("Binance Trading Bot is running... Balance: " + AccountBalance.getAccountBalance().getCoinBalance("usdt"));
-        System.out.println("Binance Trading Bot is running! Type commands.");
-//        log.info("Start");
-//        log.debug("Start debug");
+        log.info("Binance Trading Bot is running! Type commands.");
         try {
             realTimeCommandOperator.run();
         } catch (InterruptedException e) {

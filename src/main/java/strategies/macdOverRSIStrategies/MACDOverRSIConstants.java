@@ -13,6 +13,6 @@ public class MACDOverRSIConstants {
     public static final double MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE = 100;
     public static final double POSITIVE_TRAILING_PERCENTAGE = 0.15;
     public static final double CONSTANT_TRAILING_PERCENTAGE = 0.25;
-    public static final double LONG_EXIT2_OPEN_THRESHOLD = -0.05;
+    public static final double LONG_EXIT_OPEN_THRESHOLD = -0.05;
     public static final double SHORT_EXIT2_OPEN_THRESHOLD = 0.05;
 }
