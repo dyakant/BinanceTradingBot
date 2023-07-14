@@ -69,11 +69,15 @@ public class PositionHandler implements Serializable {
 
     public synchronized void update(DataHolder realTimeData, CandlestickInterval interval) {
         rebuying = false;
-        SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
-        Order order = syncRequestClient.getOrder(symbol, orderID, clientOrderId);
-        status = order.getStatus();
-        isActive(realTimeData, order, interval);
-        qty = AccountBalance.getAccountBalance().getPosition(symbol).getPositionAmt().doubleValue();
+        try {
+            SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
+            Order order = syncRequestClient.getOrder(symbol, orderID, clientOrderId);
+            status = order.getStatus();
+            isActive(realTimeData, order, interval);
+            qty = AccountBalance.getAccountBalance().getPosition(symbol).getPositionAmt().doubleValue();
+        } catch (Exception e) {
+            log.error(e.toString());
+        }
     }
 
     private void isActive(DataHolder realTimeData, Order order, CandlestickInterval interval) {
@@ -150,7 +154,7 @@ public class PositionHandler implements Serializable {
             terminated = true;
             SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
             syncRequestClient.cancelAllOpenOrder(symbol);
-            TelegramMessenger.send(symbol, "Position closed!, balance:  " + AccountBalance.getAccountBalance().getCoinBalance("usdt"));
+            TelegramMessenger.send(symbol, "Position closed!, balance:  " + AccountBalance.getBalanceUsdt());
         }
     }
 

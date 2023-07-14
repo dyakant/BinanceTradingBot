@@ -5,6 +5,7 @@ import com.binance.client.model.enums.CandlestickInterval;
 import data.AccountBalance;
 import data.DataHolder;
 import data.RealTimeData;
+import lombok.extern.slf4j.Slf4j;
 import positions.PositionHandler;
 import singletonHelpers.ExecService;
 import singletonHelpers.SubClient;
@@ -15,6 +16,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+@Slf4j
 public class InvestmentManager implements Runnable {
     private final CandlestickInterval interval;
     private final String symbol;
@@ -22,7 +24,6 @@ public class InvestmentManager implements Runnable {
     ConcurrentLinkedDeque<EntryStrategy> entryStrategies;
     ConcurrentLinkedDeque<PositionHandler> positionHandlers;
     ConcurrentLinkedDeque<Future<?>> futures;
-
 
     public InvestmentManager(CandlestickInterval interval, String symbol, EntryStrategy entryStrategy) {
         this.interval = interval;
@@ -41,7 +42,7 @@ public class InvestmentManager implements Runnable {
 
         subscriptionClient.subscribeCandlestickEvent(symbol, interval,
                 ((event) -> iterationExecutorService.execute(() -> {
-                    DataHolder dataHolder = realTimeData.updateData(event);
+                    DataHolder dataHolder = realTimeData.updateData(symbol, event);
                     if (dataHolder != null) {
                         AccountBalance.getAccountBalance().updateBalance();
                         for (PositionHandler positionHandler : positionHandlers) {
@@ -54,7 +55,12 @@ public class InvestmentManager implements Runnable {
                             }
                         }
                         for (EntryStrategy entryStrategy : entryStrategies) {
-                            PositionHandler positionHandler = entryStrategy.run(dataHolder, symbol);
+                            PositionHandler positionHandler = null;
+                            try {
+                                positionHandler = entryStrategy.run(dataHolder, symbol);
+                            } catch (Exception e) {
+                                log.error(e.toString());
+                            }
                             if (positionHandler != null) {
                                 TelegramMessenger.send(symbol, "Order executed by the strategy '" + entryStrategy.getName() + " / " + interval + "'");
                                 positionHandlers.add(positionHandler);
