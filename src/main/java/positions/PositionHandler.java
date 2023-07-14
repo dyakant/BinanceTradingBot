@@ -173,7 +173,7 @@ public class PositionHandler implements Serializable {
                     break;
 
                 case SELL_MARKET:
-                    order = syncRequestClient.postOrder(symbol, SELL, BOTH, MARKET, GTC, sellingQty, null,
+                    order = syncRequestClient.postOrder(symbol, SELL, BOTH, MARKET, null, sellingQty, null,
                             REDUCE_ONLY, null, null, null, null,
                             null, CONTRACT_PRICE, null, RESULT);
                     break;
@@ -185,7 +185,7 @@ public class PositionHandler implements Serializable {
                     break;
 
                 case CLOSE_SHORT_MARKET:
-                    order = syncRequestClient.postOrder(symbol, BUY, BOTH, MARKET, GTC, sellingQty, null,
+                    order = syncRequestClient.postOrder(symbol, BUY, BOTH, MARKET, null, sellingQty, null,
                             REDUCE_ONLY, null, null, null, null,
                             null, CONTRACT_PRICE, null, RESULT);
                     break;
