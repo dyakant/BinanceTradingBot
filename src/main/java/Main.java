@@ -15,7 +15,7 @@ public class Main {
         AccountBalance accountBalance = AccountBalance.getAccountBalance();
         BinanceInfo binanceInfo = BinanceInfo.getBinanceInfo();
         TelegramMessenger.send("Binance Trading Bot is running... Balance: " + AccountBalance.getAccountBalance().getCoinBalance("usdt"));
-        log.info("Binance Trading Bot is running! Type commands.");
+        System.out.println("Binance Trading Bot is running!");
         if (COMMAND.equals(COMMAND_CONSOLE)) {
             runConsoleCommand();
         }

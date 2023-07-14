@@ -7,6 +7,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by Anton Dyakov on 14.07.2023
  */
@@ -23,19 +27,31 @@ public class TraderBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
-            String result = proccessMessage(update.getMessage().getText());
-            if (result.isEmpty() || result.isBlank()) {
-                result = update.getMessage().getText() + " processed successfully";
+            var list = update.getMessage().getText().split(",");
+            String result;
+            if (list.length <= 1) {
+                result = proccessOneMessage(list[0]);
+            } else {
+                result = processBatchMessages(list);
             }
-            SendMessage message = new SendMessage(); // Create a SendMessage object with mandatory fields
-            message.setChatId(update.getMessage().getChatId().toString());
-            message.setText(result);
-            try {
-                execute(message); // Call method to send the message
-            } catch (TelegramApiException e) {
-                log.error(e.toString());
-            }
+            sendMessageToChat(result, update.getMessage().getChatId().toString());
         }
+    }
+
+    private String proccessOneMessage(String command) {
+        String result = proccessMessage(command);
+        if (result.isEmpty() || result.isBlank()) {
+            result = "[" + command + "] processed successfully";
+        }
+        return result;
+    }
+
+    private String processBatchMessages(String[] commands) {
+        List<String> list = new ArrayList<>();
+        for (String command : commands) {
+            list.add(proccessOneMessage(command));
+        }
+        return String.join("\n", list);
     }
 
     private String proccessMessage(String command) {
@@ -45,6 +61,17 @@ public class TraderBot extends TelegramLongPollingBot {
             realTimeCommandOperator.getCommandsAndOps().get(message.getOperation()).run(message);
         }
         return result;
+    }
+
+    private void sendMessageToChat(String result, String chatId) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(result);
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error(e.toString());
+        }
     }
 
     @Override

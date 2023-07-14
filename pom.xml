@@ -66,7 +66,6 @@
             <artifactId>log4j</artifactId>
             <version>1.2.17</version>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -89,6 +88,7 @@
                     </archive>
                     <excludes>
                         <exclude>**/Config.properties</exclude>
+                        <exclude>**/log4j.properties</exclude>
                     </excludes>
                 </configuration>
             </plugin>
