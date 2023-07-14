@@ -131,7 +131,7 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
             positionHandler = new PositionHandler(buyOrder, exitStrategies);
             log.info("{}, buyOrder: {}", symbol, buyOrder);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.toString());
         }
         return positionHandler;
     }

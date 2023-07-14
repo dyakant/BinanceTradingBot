@@ -109,7 +109,7 @@ public class PositionHandler implements Serializable {
             clientOrderId = buyOrder.getClientOrderId();
             orderID = buyOrder.getOrderId();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.toString());
         }
     }
 
@@ -201,7 +201,7 @@ public class PositionHandler implements Serializable {
             }
         } catch (Exception e) {
             TelegramMessenger.send(symbol, "Exception happened");
-            e.printStackTrace();
+            log.error(e.toString());
         }
     }
 

@@ -1,6 +1,7 @@
 package singletonHelpers;
 
 import data.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedInputStream;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
 
+@Slf4j
 public class TelegramMessenger {
     private static final String apiToken = Config.TELEGRAM_API_TOKEN;
     private static final String chatId = Config.TELEGRAM_CHAT_ID;
@@ -32,7 +34,7 @@ public class TelegramMessenger {
             URLConnection conn = url.openConnection();
             InputStream is = new BufferedInputStream(conn.getInputStream());
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.toString());
         }
     }
 

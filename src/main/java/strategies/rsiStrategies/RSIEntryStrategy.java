@@ -87,7 +87,7 @@ public class RSIEntryStrategy implements EntryStrategy {
                     ArrayList<ExitStrategy> exitStrategies = defineExitStrategy();
                     return new PositionHandler(buyOrder, exitStrategies);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error(e.toString());
                 }
             }
         }

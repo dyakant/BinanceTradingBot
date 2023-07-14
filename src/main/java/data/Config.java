@@ -1,9 +1,12 @@
 package data;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Properties;
 
+@Slf4j
 public class Config {
     //Personal information:
     public static String API_KEY = "<Your binance api key>";
@@ -26,7 +29,7 @@ public class Config {
         try {
             setPropValues();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.toString());
         }
     }
 
@@ -45,7 +48,7 @@ public class Config {
             THREAD_NUM = Integer.parseInt(prop.getProperty("THREAD_NUM"));
             CANDLE_NUM = Integer.parseInt(prop.getProperty("CANDLE_NUM"));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.toString());
         }
     }
 }

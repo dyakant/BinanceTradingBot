@@ -17,7 +17,7 @@ public class Main {
         try {
             realTimeCommandOperator.run();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error(e.toString());
         }
     }
 }

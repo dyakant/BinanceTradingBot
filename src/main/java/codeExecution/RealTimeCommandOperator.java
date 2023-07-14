@@ -10,6 +10,7 @@ import com.binance.client.model.trade.Order;
 import com.binance.client.model.trade.Position;
 import data.AccountBalance;
 import data.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import singletonHelpers.ExecService;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+@Slf4j
 public class RealTimeCommandOperator {
     private final HashMap<String, RealTimeOperation> commandsAndOps;
     private final HashMap<Pair<String, CandlestickInterval>, InvestmentManager> investmentManagerHashMap;
@@ -182,7 +184,7 @@ public class RealTimeCommandOperator {
                         if (messageOperation.equals(RealTImeOperations.CLOSE_PROGRAM)) break;
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error(e.toString());
                 }
             }
         }
