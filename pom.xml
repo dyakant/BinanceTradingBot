@@ -12,6 +12,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <telegram.version>6.7.0</telegram.version>
     </properties>
 
     <dependencies>
@@ -34,6 +35,16 @@
             <groupId>com.github.yonathan95</groupId>
             <artifactId>binance-java-sdk</artifactId>
             <version>1.2.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambots</artifactId>
+            <version>${telegram.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambotsextensions</artifactId>
+            <version>${telegram.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

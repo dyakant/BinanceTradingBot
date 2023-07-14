@@ -14,7 +14,8 @@ public class InputMessage {
     private String apiKey;
     private String secretKey;
 
-    public void initialize(String input) {
+    public String processCommand(String input) {
+        String returnValue = "";
         String[] messageParts = input.split(" ");
         operation = messageParts[0];
         switch (operation) {
@@ -24,20 +25,20 @@ public class InputMessage {
 
             case RealTImeOperations.GET_OPEN_ORDERS:
 
-            case RealTImeOperations.GET_CURRENT_BALANCE:
-
             case RealTImeOperations.SHOW_STRATEGIES:
                 if (messageParts.length != 2) {
-                    System.out.println("provide necessary parameters");
+                    returnValue = "provide necessary parameters";
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                     break;
                 }
                 symbol = messageParts[1];
                 if (!BinanceInfo.isSymbolExists(symbol)) {
-                    System.out.println("Wrong symbol");
+                    returnValue = "Wrong symbol";
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                 }
                 break;
+
+            case RealTImeOperations.GET_CURRENT_BALANCE:
 
             case RealTImeOperations.SHOW_ALL_STRATEGIES:
 
@@ -52,19 +53,19 @@ public class InputMessage {
 
             case RealTImeOperations.DEACTIVATE_STRATEGY:
                 if (messageParts.length != 4) {
-                    System.out.println("provide necessary parameters");
+                    returnValue = "provide necessary parameters";
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                     break;
                 }
                 symbol = messageParts[1];
                 if (!BinanceInfo.isSymbolExists(symbol)) {
-                    System.out.println("Wrong symbol");
+                    returnValue = "Wrong symbol";
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                     break;
                 }
                 entryStrategy = stringToEntryStrategy(messageParts[2]);
                 if (entryStrategy == null) {
-                    System.out.println("This strategy don't exists");
+                    returnValue = "This strategy don't exists";
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                     break;
                 }
@@ -73,14 +74,14 @@ public class InputMessage {
                     if (candlestickInterval.toString().equals(messageParts[3])) interval = candlestickInterval;
                 }
                 if (interval == null) {
-                    System.out.println("Wrong interval");
+                    returnValue = "Wrong interval";
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                     break;
                 }
                 break;
 
             case "help":
-                System.out.println("""
+                returnValue = """
                         Optional commands:
                         cao [symbol] - Cancel all orders, for [symbol]
                         cap - Close all open positions
@@ -95,14 +96,14 @@ public class InputMessage {
                         cp - Close program
 
                          entryStrategy options: rsi, macd
-                         interval options: 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h ,8h, 12h, 1d, 3d, 1w, 1M"""
-                );
+                         interval options: 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h ,8h, 12h, 1d, 3d, 1w, 1M""";
                 break;
 
             default:
-                System.out.println("Wrong operation");
+                returnValue = "Wrong operation";
                 operation = RealTImeOperations.UNKNOWN_OPERATION;
         }
+        return returnValue;
     }
 
     private EntryStrategy stringToEntryStrategy(String strategyName) {

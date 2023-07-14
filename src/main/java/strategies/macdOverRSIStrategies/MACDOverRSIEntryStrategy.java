@@ -84,12 +84,14 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
             boolean isPreviousMacdCandleCrossedRsiUp = realTimeData.crossed(MACD_OVER_RSI, CLOSE, UP, ZERO);
             if (isPreviousMacdCandleCrossedRsiUp) {
                 if (bought) return null;
+                log.info("{} BUY LONG! MACDOverRSIEntryStrategy, isPreviousMacdCandleCrossedRsiUp={}", symbol, isPreviousMacdCandleCrossedRsiUp);
                 return buyAndCreatePositionHandler(symbol, currentPrice, LONG);
             } else {
                 boolean macdValueBelowZero = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()) < ZERO;
                 boolean isMacdOverRsiGrows = decliningPyramid(realTimeData, NEGATIVE);
                 if (macdValueBelowZero && isMacdOverRsiGrows) {
                     if (bought) return null;
+                    log.info("{} BUY LONG! MACDOverRSIEntryStrategy, macdValueBelowZero={}, isMacdOverRsiGrows={}", symbol, realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()), isMacdOverRsiGrows);
                     return buyAndCreatePositionHandler(symbol, currentPrice, LONG);
                 }
             }
@@ -98,12 +100,14 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
             boolean isPreviousMacdCandleCrossedRsiDown = realTimeData.crossed(MACD_OVER_RSI, CLOSE, DOWN, ZERO);
             if (isPreviousMacdCandleCrossedRsiDown) {
                 if (bought) return null;
+                log.info("{} BUY SHORT! MACDOverRSIEntryStrategy, isPreviousMacdCandleCrossedRsiDown={}", symbol, isPreviousMacdCandleCrossedRsiDown);
                 return buyAndCreatePositionHandler(symbol, currentPrice, SHORT);
             } else {
                 boolean macdValueAboveZero = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()) > ZERO;
                 boolean isMacdOverRsiFall = decliningPyramid(realTimeData, POSITIVE);
                 if (macdValueAboveZero && isMacdOverRsiFall) {
                     if (bought) return null;
+                    log.info("{} BUY SHORT! MACDOverRSIEntryStrategy, macdValueAboveZero={}, isMacdOverRsiFall={}", symbol, realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()), isMacdOverRsiFall);
                     return buyAndCreatePositionHandler(symbol, currentPrice, SHORT);
                 }
             }
@@ -120,7 +124,7 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
             ArrayList<ExitStrategy> exitStrategies;
             String buyingQty = utils.Utils.getBuyingQtyAsString(currentPrice, symbol, leverage, requestedBuyingAmount);
             TelegramMessenger.send(symbol, "buying " + positionSide.toString().toLowerCase() + ": " + buyingQty + ", price " + currentPrice);
-            log.debug("{} {}, buyingQty={}, currentPrice={}", symbol, positionSide.toString().toLowerCase(), buyingQty, currentPrice);
+            log.info("{} {}, buyingQty={}, currentPrice={}", symbol, positionSide.toString().toLowerCase(), buyingQty, currentPrice);
             if (positionSide == LONG) {
                 buyOrder = postOrder(symbol, BUY, currentPrice, buyingQty);
                 exitStrategies = defineLongExitStrategy(currentPrice);

@@ -21,7 +21,7 @@ public class AccountBalance {
     private final ReadWriteLock positionsLock = new ReentrantReadWriteLock();
 
     private static class AccountBalanceHolder {
-        private static AccountBalance accountBalance = new AccountBalance();
+        private static final AccountBalance accountBalance = new AccountBalance();
     }
 
     private AccountBalance() {
@@ -36,6 +36,10 @@ public class AccountBalance {
 
     public static AccountBalance getAccountBalance() {
         return AccountBalanceHolder.accountBalance;
+    }
+
+    public static BigDecimal getBalanceUsdt() {
+        return AccountBalanceHolder.accountBalance.getCoinBalance("usdt");
     }
 
     public BigDecimal getCoinBalance(String symbol) {

@@ -71,17 +71,17 @@ public class RSIEntryStrategy implements EntryStrategy {
                 double currentPrice = realTimeData.getCurrentPrice();
                 String buyingQty = Utils.getBuyingQtyAsString(currentPrice, symbol, leverage, requestedBuyingAmount);
                 try {
-                    log.debug("{}. buy order, buyingQty={}, currentPrice={}", symbol, buyingQty, currentPrice);
+                    log.info("{}. buy order, buyingQty={}, currentPrice={}", symbol, buyingQty, currentPrice);
                     TelegramMessenger.send(symbol, "buying long... " + buyingQty + ", price " + currentPrice);
                     Order buyOrder = postOrder(symbol, BUY, MARKET, buyingQty, null, null);
                     log.info("{}. buy order: {}", symbol, buyOrder);
 
                     String takeProfitPrice = Utils.getTakeProfitPriceAsString(realTimeData, symbol, takeProfitPercentage);
-                    log.debug("{}. buy order takeProfitPrice={}", symbol, currentPrice);
+                    log.info("{}. buy order takeProfitPrice={}", symbol, currentPrice);
                     postOrder(symbol, SELL, TAKE_PROFIT, buyingQty, takeProfitPrice, takeProfitPrice);
 
                     String stopLossPrice = Utils.getStopLossPriceAsString(realTimeData, symbol, stopLossPercentage);
-                    log.debug("{}. buy order stopLossPrice={}", symbol, stopLossPrice);
+                    log.info("{}. buy order stopLossPrice={}", symbol, stopLossPrice);
                     postOrder(symbol, SELL, STOP, buyingQty, stopLossPrice, stopLossPrice);
 
                     ArrayList<ExitStrategy> exitStrategies = defineExitStrategy();
@@ -97,7 +97,7 @@ public class RSIEntryStrategy implements EntryStrategy {
     private Order postOrder(String symbol, OrderSide orderSide, OrderType orderType, String buyingQty, String price, String stopPrice) {
         SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
         syncRequestClient.changeInitialLeverage(symbol, leverage);
-        log.debug("{} postOrder: orderSide={}, orderType={}, buyingQty={}, price={}, stopPrice={}", symbol, orderSide, orderType, buyingQty, price, stopPrice);
+        log.info("{} postOrder: orderSide={}, orderType={}, buyingQty={}, price={}, stopPrice={}", symbol, orderSide, orderType, buyingQty, price, stopPrice);
         return syncRequestClient.postOrder(
                 symbol,
                 orderSide,

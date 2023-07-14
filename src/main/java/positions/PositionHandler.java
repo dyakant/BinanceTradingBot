@@ -100,7 +100,7 @@ public class PositionHandler implements Serializable {
     private synchronized void rebuyOrder(DataHolder realTimeData, Order order) {
         rebuying = true;
         try {
-            log.debug("{} rebuyOrder, order={}", symbol, order);
+            log.info("{} rebuyOrder, order={}", symbol, order);
             SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
             syncRequestClient.cancelAllOpenOrder(symbol);
             OrderSide side = stringToOrderSide(order.getSide());
@@ -160,7 +160,7 @@ public class PositionHandler implements Serializable {
         try {
             Order order = null;
             String currentPrice = realTimeData.getCurrentPrice().toString();
-            log.debug("{} closePosition with type {}", symbol, sellingInstructions.getType());
+            log.info("{} closePosition with type {}", symbol, sellingInstructions.getType());
             switch (sellingInstructions.getType()) {
 
                 case STAY_IN_POSITION:
@@ -193,10 +193,10 @@ public class PositionHandler implements Serializable {
                 default:
             }
             if (Objects.nonNull(order)) {
-                log.debug("{} position closed, order: {}", symbol, order);
+                log.info("{} position closed, order: {}", symbol, order);
                 TelegramMessenger.send(symbol, "Selling price:  " + currentPrice);
             } else {
-                log.debug("{} position not closed, order is empty", symbol);
+                log.info("{} position not closed, order is empty", symbol);
                 TelegramMessenger.send(symbol, "Not done. " + sellingInstructions.getType());
             }
         } catch (Exception e) {

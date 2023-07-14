@@ -10,7 +10,6 @@ import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD_OVER_RS
 
 /**
  * Стратегия для закрытия позиции при лонге.
- *
  */
 public class MACDOverRSILongExitStrategy3 extends MACDOverRSIBaseExitStrategy {
     private boolean isTrailing = false;

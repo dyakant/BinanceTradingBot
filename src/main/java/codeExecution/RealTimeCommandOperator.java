@@ -20,8 +20,6 @@ import singletonHelpers.TelegramMessenger;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Scanner;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -32,13 +30,10 @@ public class RealTimeCommandOperator {
     private final HashMap<String, RealTimeOperation> commandsAndOps;
     private final HashMap<Pair<String, CandlestickInterval>, InvestmentManager> investmentManagerHashMap;
     private final ReadWriteLock investmentManagerHashMapLock = new ReentrantReadWriteLock();
-    private final ConcurrentLinkedDeque<InputMessage> awaitingMessages;
-    private boolean shouldTerminate = false;
 
     public RealTimeCommandOperator() {
         investmentManagerHashMap = new HashMap<>();
         commandsAndOps = new HashMap<>();
-        awaitingMessages = new ConcurrentLinkedDeque<>();
 
         commandsAndOps.put(RealTImeOperations.CANCEL_ALL_ORDERS, (message) -> {
             SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
@@ -72,7 +67,7 @@ public class RealTimeCommandOperator {
                 investmentManagerHashMap.put(pair, investmentManager);
                 investmentManagerHashMapLock.writeLock().unlock();
                 TelegramMessenger.send(message.getSymbol(), "activate strategy '" + message.getEntryStrategy().getName() +
-                        " / " + message.getInterval() + "', balance: " + AccountBalance.getAccountBalance().getCoinBalance("usdt"));
+                        " / " + message.getInterval() + "', balance: " + AccountBalance.getBalanceUsdt());
                 investmentManager.run();
             }
         });
@@ -88,18 +83,20 @@ public class RealTimeCommandOperator {
 
         commandsAndOps.put(RealTImeOperations.SHOW_STRATEGIES, (message) -> {
             investmentManagerHashMapLock.readLock().lock();
-            investmentManagerHashMap.entrySet().stream()
+            List<String> list = investmentManagerHashMap.entrySet().stream()
                     .filter((k) -> k.getKey().getKey().equals(message.getSymbol()))
-                    .forEach(o ->
-                            System.out.println(o.getKey() + ": " + o.getValue().getStrategyName() + " / " + o.getKey().getValue())
-                    );
+                    .map(o -> o.getKey() + ": " + o.getValue().getStrategyName() + " / " + o.getKey().getValue())
+                    .toList();
+            TelegramMessenger.send(list.toString());
             investmentManagerHashMapLock.readLock().unlock();
         });
 
         commandsAndOps.put(RealTImeOperations.SHOW_ALL_STRATEGIES, (message) -> {
             investmentManagerHashMapLock.readLock().lock();
-            investmentManagerHashMap.forEach((key, value) ->
-                    System.out.println(key.getKey() + ": " + value.getStrategyName() + " / " + key.getValue()));
+            List<String> list = investmentManagerHashMap.entrySet().stream()
+                    .map(o -> o.getKey() + ": " + o.getValue().getStrategyName() + " / " + o.getKey().getValue())
+                    .toList();
+            TelegramMessenger.send(list.toString());
             investmentManagerHashMapLock.readLock().unlock();
         });
 
@@ -132,8 +129,8 @@ public class RealTimeCommandOperator {
             }
         });
 
-        commandsAndOps.put(RealTImeOperations.GET_CURRENT_BALANCE, (message) -> System.out.println("Your current balance is: " +
-                AccountBalance.getAccountBalance().getCoinBalance(message.getSymbol())));
+        commandsAndOps.put(RealTImeOperations.GET_CURRENT_BALANCE, (message) ->
+                TelegramMessenger.send("Your current balance is: " + AccountBalance.getBalanceUsdt()));
 
         commandsAndOps.put(RealTImeOperations.CLOSE_PROGRAM, (message) -> {
             SubClient.getSubClient().getSubscriptionClient().unsubscribeAll();
@@ -149,44 +146,7 @@ public class RealTimeCommandOperator {
         });
     }
 
-    public void run() throws InterruptedException {
-        Thread realTimeCommandOperatorThread = new Thread(new KeyboardReader());
-        realTimeCommandOperatorThread.start();
-        synchronized (awaitingMessages) {
-            while (!shouldTerminate) {
-                InputMessage message = awaitingMessages.poll();
-                if (message == null) {
-                    awaitingMessages.wait();
-                } else {
-                    if (commandsAndOps.containsKey(message.getOperation())) {
-                        commandsAndOps.get(message.getOperation()).run(message);
-                    }
-                }
-            }
-        }
-    }
-
-    private class KeyboardReader implements Runnable {
-        public void run() {
-            Scanner scan = new Scanner(System.in);
-            while (true) {
-                try {
-                    InputMessage message = new InputMessage();
-                    System.out.print("# ");
-                    String input = scan.nextLine();
-                    message.initialize(input);
-                    String messageOperation = message.getOperation();
-                    if (!messageOperation.equals(RealTImeOperations.UNKNOWN_OPERATION)) {
-                        synchronized (awaitingMessages) {
-                            awaitingMessages.add(message);
-                            awaitingMessages.notifyAll();
-                        }
-                        if (messageOperation.equals(RealTImeOperations.CLOSE_PROGRAM)) break;
-                    }
-                } catch (Exception e) {
-                    log.error(e.toString());
-                }
-            }
-        }
+    public HashMap<String, RealTimeOperation> getCommandsAndOps() {
+        return commandsAndOps;
     }
 }
