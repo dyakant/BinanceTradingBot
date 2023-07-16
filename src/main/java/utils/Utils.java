@@ -8,25 +8,21 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import static utils.TimeConstants.*;
+
 public class Utils {
     public static Long candleStickIntervalToMilliseconds(CandlestickInterval interval) {
         String intervalCode = interval.toString();
         int value = Integer.parseInt(intervalCode.substring(0, intervalCode.length() - 1));
         char typeOfTime = intervalCode.charAt(intervalCode.length() - 1);
-        switch (typeOfTime) {
-            case 'm':
-                return (long) value * TimeConstants.MINUTES_TO_MILLISECONDS_CONVERTER;
-            case 'h':
-                return (long) value * TimeConstants.HOURS_TO_MILLISECONDS_CONVERTER;
-            case 'd':
-                return (long) value * TimeConstants.DAYS_TO_MILLISECONDS_CONVERTER;
-            case 'w':
-                return (long) value * TimeConstants.WEEKS_TO_MILLISECONDS_CONVERTER;
-            case 'M':
-                return (long) value * TimeConstants.MONTHS_TO_MILLISECONDS_CONVERTER;
-            default:
-                return -1L;
-        }
+        return switch (typeOfTime) {
+            case 'm' -> (long) value * MINUTES_TO_MILLISECONDS_CONVERTER;
+            case 'h' -> (long) value * HOURS_TO_MILLISECONDS_CONVERTER;
+            case 'd' -> (long) value * DAYS_TO_MILLISECONDS_CONVERTER;
+            case 'w' -> (long) value * WEEKS_TO_MILLISECONDS_CONVERTER;
+            case 'M' -> (long) value * MONTHS_TO_MILLISECONDS_CONVERTER;
+            default -> -1L;
+        };
     }
 
     public static ZonedDateTime getZonedDateTime(Long timestamp) {
@@ -55,5 +51,4 @@ public class Utils {
         }
         return amt;
     }
-
 }
