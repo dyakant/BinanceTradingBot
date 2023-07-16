@@ -3,14 +3,10 @@ package utils;
 import com.binance.client.model.enums.PositionSide;
 
 public class Trailer {
-
     private double absoluteMaxPrice;
-
     private double exitPrice;
-
     private PositionSide side;
-
-    Double trailingPercentage;
+    private final Double trailingPercentage;
 
     public Trailer(double currentPrice, Double trailingPercentage, PositionSide side) {
         absoluteMaxPrice = currentPrice;
@@ -78,7 +74,4 @@ public class Trailer {
         return trailingPercentage;
     }
 
-    public void setTrailingPercentage(Double trailingPercentage) {
-        this.trailingPercentage = trailingPercentage;
-    }
 }
