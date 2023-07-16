@@ -6,30 +6,34 @@ import strategies.ExitStrategy;
 public abstract class MACDOverRSIBaseExitStrategy implements ExitStrategy {
 
     public boolean changedDirectionAndPositiveThreeHistogram(DataHolder realTimeData) {
-        double now = realTimeData.getMacdOverRsiCloseValue();
+        double current = realTimeData.getMacdOverRsiCloseValue();
         double prev = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 1);
-        return now > 0 && prev > 0 && realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2) > 0
-                && Math.abs(prev) >= Math.abs(now);
+        double third = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2);
+        boolean isCurrentBelowPrevious = Math.abs(current) <= Math.abs(prev);
+        return isCurrentBelowPrevious && current > 0 && prev > 0 && third > 0;
     }
 
     public boolean changedDirectionAndNegativeThreeHistogram(DataHolder realTimeData) {
-        double now = realTimeData.getMacdOverRsiCloseValue();
+        double current = realTimeData.getMacdOverRsiCloseValue();
         double prev = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 1);
-        return now < 0 && prev < 0 && realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2) < 0
-                && Math.abs(prev) >= Math.abs(now);
+        double third = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2);
+        boolean isCurrentBelowPrevious = Math.abs(current) <= Math.abs(prev);
+        return isCurrentBelowPrevious && current < 0 && prev < 0 && third < 0;
     }
 
     public boolean stayInTrackAndThreePositiveHistograms(DataHolder realTimeData) {
-        double now = realTimeData.getMacdOverRsiCloseValue();
+        double current = realTimeData.getMacdOverRsiCloseValue();
         double prev = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 1);
-        return Math.abs(prev) <= Math.abs(now) && now > 0 && prev > 0
-                && realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2) > 0;
+        double third = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2);
+        boolean isCurrentAbovePrevious = Math.abs(current) >= Math.abs(prev); // TODO: Is it correct?
+        return isCurrentAbovePrevious && current > 0 && prev > 0 && third > 0;
     }
 
     public boolean stayInTrackAndThreeNegativeHistograms(DataHolder realTimeData) {
-        double now = realTimeData.getMacdOverRsiCloseValue();
+        double current = realTimeData.getMacdOverRsiCloseValue();
         double prev = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 1);
-        return Math.abs(prev) <= Math.abs(now) && now < 0 && prev < 0
-                && realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2) < 0;
+        double third = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2);
+        boolean isCurrentAbovePrevious = Math.abs(current) >= Math.abs(prev); // TODO: Is it correct?
+        return isCurrentAbovePrevious && current < 0 && prev < 0 && third < 0;
     }
 }
