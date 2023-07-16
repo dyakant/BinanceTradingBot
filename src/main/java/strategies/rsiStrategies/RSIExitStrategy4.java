@@ -14,7 +14,7 @@ public class RSIExitStrategy4 implements ExitStrategy {
 
     public SellingInstructions run(DataHolder realTimeData) {
         if (!(realTimeData.above(RSI, OPEN, RSI_EXIT_OPTION_4_UNDER_THRESHOLD))) {
-            return new SellingInstructions(SELL_LIMIT, RSI_EXIT_OPTION_4_SELLING_PERCENTAGE, this.getClass().getName());
+            return new SellingInstructions(SELL_LIMIT, RSI_EXIT_OPTION_4_SELLING_PERCENTAGE);
         }
         return null;
     }

@@ -22,12 +22,12 @@ public class RSIExitStrategy3 implements ExitStrategy {
             updateValues(realTimeData.getRsiCloseValue());
         }
         if (lostValueOf15(rsiValueBefore, rsiValue)) {
-            return new SellingInstructions(SELL_LIMIT, RSI_EXIT_OPTION_3_SELLING_PERCENTAGE, this.getClass().getName());
+            return new SellingInstructions(SELL_LIMIT, RSI_EXIT_OPTION_3_SELLING_PERCENTAGE);
 
         }
         if (rsiValueTwoBefore != -1.0 && lostValueOf15(rsiValueTwoBefore, rsiValue)) {
             //TODO: no logs, no different, same result
-            return new SellingInstructions(SELL_LIMIT, RSI_EXIT_OPTION_3_SELLING_PERCENTAGE, this.getClass().getName());
+            return new SellingInstructions(SELL_LIMIT, RSI_EXIT_OPTION_3_SELLING_PERCENTAGE);
         }
         return null;
     }

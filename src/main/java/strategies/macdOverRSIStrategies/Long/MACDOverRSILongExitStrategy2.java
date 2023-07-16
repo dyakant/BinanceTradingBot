@@ -1,6 +1,7 @@
 package strategies.macdOverRSIStrategies.Long;
 
 import data.DataHolder;
+import lombok.extern.slf4j.Slf4j;
 import positions.SellingInstructions;
 import strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
 
@@ -15,12 +16,14 @@ import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD_OVER_RS
  * Стратегия для закрытия позиции при лонге.
  * Если MACD пересёк RSI вниз с порогом, закрыть полностью по лимитной заявке.
  */
+@Slf4j
 public class MACDOverRSILongExitStrategy2 extends MACDOverRSIBaseExitStrategy {
     @Override
     public SellingInstructions run(DataHolder realTimeData) {
         boolean isOpenMacdCandleCrossedRsiDown = realTimeData.crossed(MACD_OVER_RSI, OPEN, DOWN, LONG_EXIT_OPEN_THRESHOLD);
         if (isOpenMacdCandleCrossedRsiDown) {
-            return new SellingInstructions(SELL_LIMIT, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE, this.getClass().getName());
+            log.info("{} MACDOverRSILongExitStrategy2 executed, currentMacdOverRsiValue={}, prevMacdOverRsiValue={}", realTimeData.getSymbol(), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex()));
+            return new SellingInstructions(SELL_LIMIT, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
         }
         return null;
     }

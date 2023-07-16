@@ -24,12 +24,12 @@ public class RSIExitStrategy1 implements ExitStrategy {
         } else if (positionInStrategy == POSITION_TWO) {
             if (!realTimeData.above(RSI, CLOSE, RSI_EXIT_OPTION_1_UNDER_THRESHOLD1)) {
                 positionInStrategy = POSITION_THREE;
-                return new SellingInstructions(SELL_LIMIT, RSI_EXIT_OPTION_1_SELLING_PERCENTAGE1, this.getClass().getName());
+                return new SellingInstructions(SELL_LIMIT, RSI_EXIT_OPTION_1_SELLING_PERCENTAGE1);
             }
         } else if (positionInStrategy == POSITION_THREE) {
             if (!realTimeData.above(RSI, CLOSE, RSI_EXIT_OPTION_1_UNDER_THRESHOLD2)) {
                 positionInStrategy = POSITION_ONE;
-                return new SellingInstructions(SELL_LIMIT, RSI_EXIT_OPTION_1_SELLING_PERCENTAGE2, this.getClass().getName());
+                return new SellingInstructions(SELL_LIMIT, RSI_EXIT_OPTION_1_SELLING_PERCENTAGE2);
             }
         }
         return null;

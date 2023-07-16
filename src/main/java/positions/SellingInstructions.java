@@ -1,14 +1,12 @@
 package positions;
 
 public class SellingInstructions {
-    private final String strategyName;
     private final PositionHandler.ClosePositionTypes type;
     private double sellingQtyPercentage;
 
-    public SellingInstructions(PositionHandler.ClosePositionTypes type, double sellingQtyPercentage, String strategyName) {
+    public SellingInstructions(PositionHandler.ClosePositionTypes type, double sellingQtyPercentage) {
         this.type = type;
         this.sellingQtyPercentage = sellingQtyPercentage;
-        this.strategyName = strategyName;
     }
 
     public PositionHandler.ClosePositionTypes getType() {
@@ -26,8 +24,7 @@ public class SellingInstructions {
     @Override
     public String toString() {
         return "{" +
-                "strategyName='" + strategyName + '\'' +
-                ", type=" + type +
+                "type=" + type +
                 ", sellingQtyPercentage=" + sellingQtyPercentage +
                 '}';
     }
