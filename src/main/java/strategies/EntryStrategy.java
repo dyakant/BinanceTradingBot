@@ -13,7 +13,7 @@ public interface EntryStrategy {
 
     void setStopLossPercentage(double stopLossPercentage);
 
-    void setLeverage(int leverage);
+//    void setLeverage(int leverage);
 
     void setRequestedBuyingAmount(double requestedBuyingAmount);
 

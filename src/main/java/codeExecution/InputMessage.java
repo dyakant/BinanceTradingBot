@@ -63,7 +63,7 @@ public class InputMessage {
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                     break;
                 }
-                entryStrategy = stringToEntryStrategy(messageParts[2]);
+                entryStrategy = stringToEntryStrategy(messageParts[2], symbol);
                 if (entryStrategy == null) {
                     returnValue = "This strategy don't exists";
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
@@ -106,10 +106,10 @@ public class InputMessage {
         return returnValue;
     }
 
-    private EntryStrategy stringToEntryStrategy(String strategyName) {
+    private EntryStrategy stringToEntryStrategy(String strategyName, String symbol) {
         return switch (strategyName) {
-            case "rsi" -> new RSIEntryStrategy();
-            case "macd" -> new MACDOverRSIEntryStrategy();
+            case RSIEntryStrategy.NAME -> new RSIEntryStrategy(symbol);
+            case MACDOverRSIEntryStrategy.NAME -> new MACDOverRSIEntryStrategy(symbol);
             default -> null;
         };
     }

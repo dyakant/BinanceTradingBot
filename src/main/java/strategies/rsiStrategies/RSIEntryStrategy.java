@@ -22,6 +22,7 @@ import static com.binance.client.model.enums.NewOrderRespType.RESULT;
 import static com.binance.client.model.enums.OrderSide.BUY;
 import static com.binance.client.model.enums.OrderSide.SELL;
 import static com.binance.client.model.enums.OrderType.*;
+import static com.binance.client.model.enums.TimeInForce.GTC;
 import static com.binance.client.model.enums.WorkingType.MARK_PRICE;
 import static data.DataHolder.CandleType.CLOSE;
 import static data.DataHolder.CrossType.DOWN;
@@ -29,17 +30,24 @@ import static data.DataHolder.CrossType.UP;
 import static data.DataHolder.IndicatorType.RSI;
 import static strategies.PositionInStrategy.*;
 import static strategies.rsiStrategies.RSIConstants.*;
+import static utils.Utils.*;
 
 @Slf4j
 public class RSIEntryStrategy implements EntryStrategy {
-    public final String NAME = "rsi";
+    public static final String NAME = "rsi";
+    private final SyncRequestClient syncRequestClient;
     double takeProfitPercentage = TAKE_PROFIT_PERCENTAGE;
     private double stopLossPercentage = STOP_LOSS_PERCENTAGE;
-    private int leverage = LEVERAGE;
+    private final int leverage = LEVERAGE;
     private double requestedBuyingAmount = BUYING_AMOUNT;
     private PositionInStrategy positionInStrategy = POSITION_ONE;
     private int time_passed_from_position_2 = 0;
     double rsiValueToCheckForPosition3 = -1;
+
+    public RSIEntryStrategy(String symbol) {
+         syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
+        syncRequestClient.changeInitialLeverage(symbol, leverage);
+    }
 
     public synchronized PositionHandler run(DataHolder realTimeData, String symbol) {
         if (positionInStrategy == POSITION_ONE) {
@@ -69,18 +77,18 @@ public class RSIEntryStrategy implements EntryStrategy {
                 rsiValueToCheckForPosition3 = -1;
 
                 double currentPrice = realTimeData.getCurrentPrice();
-                String buyingQty = Utils.getBuyingQtyAsString(currentPrice, symbol, leverage, requestedBuyingAmount);
+                String buyingQty = getBuyingQtyAsString(currentPrice, symbol, leverage, requestedBuyingAmount);
                 try {
                     log.info("{}. buy order, buyingQty={}, currentPrice={}", symbol, buyingQty, currentPrice);
                     TelegramMessenger.send(symbol, "buying long... " + buyingQty + ", price " + currentPrice);
                     Order buyOrder = postOrder(symbol, BUY, MARKET, buyingQty, null, null);
                     log.info("{}. buy order: {}", symbol, buyOrder);
 
-                    String takeProfitPrice = Utils.getTakeProfitPriceAsString(realTimeData, symbol, takeProfitPercentage);
+                    String takeProfitPrice = getTakeProfitPriceAsString(realTimeData, symbol, takeProfitPercentage);
                     log.info("{}. buy order takeProfitPrice={}", symbol, currentPrice);
                     postOrder(symbol, SELL, TAKE_PROFIT, buyingQty, takeProfitPrice, takeProfitPrice);
 
-                    String stopLossPrice = Utils.getStopLossPriceAsString(realTimeData, symbol, stopLossPercentage);
+                    String stopLossPrice = getStopLossPriceAsString(realTimeData, symbol, stopLossPercentage);
                     log.info("{}. buy order stopLossPrice={}", symbol, stopLossPrice);
                     postOrder(symbol, SELL, STOP, buyingQty, stopLossPrice, stopLossPrice);
 
@@ -95,15 +103,13 @@ public class RSIEntryStrategy implements EntryStrategy {
     }
 
     private Order postOrder(String symbol, OrderSide orderSide, OrderType orderType, String buyingQty, String price, String stopPrice) {
-        SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
-        syncRequestClient.changeInitialLeverage(symbol, leverage);
         log.info("{} postOrder: orderSide={}, orderType={}, buyingQty={}, price={}, stopPrice={}", symbol, orderSide, orderType, buyingQty, price, stopPrice);
         return syncRequestClient.postOrder(
                 symbol,
                 orderSide,
                 null,
                 orderType,
-                TimeInForce.GTC,
+                GTC,
                 buyingQty,
                 price,
                 null,
@@ -133,10 +139,6 @@ public class RSIEntryStrategy implements EntryStrategy {
 
     public void setStopLossPercentage(double stopLossPercentage) {
         this.stopLossPercentage = stopLossPercentage;
-    }
-
-    public void setLeverage(int leverage) {
-        this.leverage = leverage;
     }
 
     public void setRequestedBuyingAmount(double requestedBuyingAmount) {

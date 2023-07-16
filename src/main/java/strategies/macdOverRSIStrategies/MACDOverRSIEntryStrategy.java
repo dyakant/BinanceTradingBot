@@ -34,30 +34,31 @@ import static data.DataHolder.CandleType.CLOSE;
 import static data.DataHolder.CrossType.DOWN;
 import static data.DataHolder.CrossType.UP;
 import static data.DataHolder.IndicatorType.MACD_OVER_RSI;
-import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.CONSTANT_TRAILING_PERCENTAGE;
-import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.POSITIVE_TRAILING_PERCENTAGE;
+import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.*;
 import static strategies.macdOverRSIStrategies.MACDOverRSIEntryStrategy.DecliningType.NEGATIVE;
 import static strategies.macdOverRSIStrategies.MACDOverRSIEntryStrategy.DecliningType.POSITIVE;
 
 @Slf4j
 public class MACDOverRSIEntryStrategy implements EntryStrategy {
-    public final String NAME = "macd";
+    public static final String NAME = "macd";
+    private final SyncRequestClient syncRequestClient;
     private final AccountBalance accountBalance;
-    double takeProfitPercentage = MACDOverRSIConstants.TAKE_PROFIT_PERCENTAGE;
-    private double stopLossPercentage = MACDOverRSIConstants.STOP_LOSS_PERCENTAGE;
-    private int leverage = MACDOverRSIConstants.LEVERAGE;
-    private double requestedBuyingAmount = MACDOverRSIConstants.BUYING_AMOUNT;
+    double takeProfitPercentage = TAKE_PROFIT_PERCENTAGE;
+    private double stopLossPercentage = STOP_LOSS_PERCENTAGE;
+    private final int leverage = LEVERAGE;
+    private double requestedBuyingAmount = BUYING_AMOUNT;
     private volatile boolean bought = false;
 
-    public MACDOverRSIEntryStrategy() {
+    public MACDOverRSIEntryStrategy(String symbol) {
         accountBalance = AccountBalance.getAccountBalance();
+        syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
+        syncRequestClient.changeInitialLeverage(symbol, leverage);
     }
 
     @Override
     public synchronized PositionHandler run(DataHolder realTimeData, String symbol) {
         boolean notInPosition = accountBalance.getPosition(symbol).getPositionAmt().compareTo(BigDecimal.valueOf(DOUBLE_ZERO)) == ZERO;
         if (notInPosition) {
-            SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
             boolean noOpenOrders = syncRequestClient.getOpenOrders(symbol).size() == ZERO;
             if (noOpenOrders) {
                 return processDataWithRulesAndMakeOrder(realTimeData, symbol);
@@ -126,10 +127,10 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
             TelegramMessenger.send(symbol, "buying " + positionSide.toString().toLowerCase() + ": " + buyingQty + ", price " + currentPrice);
             log.info("{} {}, buyingQty={}, currentPrice={}", symbol, positionSide.toString().toLowerCase(), buyingQty, currentPrice);
             if (positionSide == LONG) {
-                buyOrder = postOrder(symbol, BUY, currentPrice, buyingQty);
+                buyOrder = postOrder(symbol, BUY, currentPrice.toString(), buyingQty);
                 exitStrategies = defineLongExitStrategy(currentPrice);
             } else {
-                buyOrder = postOrder(symbol, SELL, currentPrice, buyingQty);
+                buyOrder = postOrder(symbol, SELL, currentPrice.toString(), buyingQty);
                 exitStrategies = defineShortExitStrategy(currentPrice);
             }
             positionHandler = new PositionHandler(buyOrder, exitStrategies);
@@ -140,9 +141,7 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
         return positionHandler;
     }
 
-    private Order postOrder(String symbol, OrderSide orderSide, Double currentPrice, String buyingQty) {
-        SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
-        syncRequestClient.changeInitialLeverage(symbol, leverage);
+    private Order postOrder(String symbol, OrderSide orderSide, String currentPrice, String buyingQty) {
         return syncRequestClient.postOrder(
                 symbol,
                 orderSide,
@@ -150,7 +149,7 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
                 LIMIT,
                 GTC,
                 buyingQty,
-                currentPrice.toString(),
+                currentPrice,
                 null,
                 null,
                 null,
@@ -192,11 +191,6 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
     @Override
     public void setStopLossPercentage(double stopLossPercentage) {
         this.stopLossPercentage = stopLossPercentage;
-    }
-
-    @Override
-    public void setLeverage(int leverage) {
-        this.leverage = leverage;
     }
 
     @Override
