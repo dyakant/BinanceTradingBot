@@ -10,6 +10,7 @@ import static data.DataHolder.CrossType.UP;
 import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.SIGNAL_LENGTH;
 
 public class DataHolder {
+    private final String symbol;
     private final Double currentPrice;
     private final RSIIndicator rsiIndicator;
     private final MACDIndicator macdOverRsiIndicator;
@@ -17,7 +18,8 @@ public class DataHolder {
     private final SMAIndicator smaIndicator;
     private final int endIndex;
 
-    public DataHolder(double currentPrice, RSIIndicator rsiIndicator, MACDIndicator macdOverRsiIndicator, SMAIndicator smaIndicator, int endIndex) {
+    public DataHolder(String symbol, double currentPrice, RSIIndicator rsiIndicator, MACDIndicator macdOverRsiIndicator, SMAIndicator smaIndicator, int endIndex) {
+        this.symbol = symbol;
         this.currentPrice = currentPrice;
         this.rsiIndicator = rsiIndicator;
         this.macdOverRsiIndicator = macdOverRsiIndicator;
@@ -76,10 +78,10 @@ public class DataHolder {
     private boolean macdOverRsiCrossed(CandleType candleType, CrossType crossType, double threshold) {
         double currentMacdOverRsiValue, prevMacdOverRsiValue;
         if (candleType == OPEN) {
-            currentMacdOverRsiValue = getMacdOverRsiValueAtIndex(endIndex);
-            prevMacdOverRsiValue = macdOverRsiCloseValue;
+            currentMacdOverRsiValue = getMacdOverRsiValueAtIndex(getLastIndex());
+            prevMacdOverRsiValue = getMacdOverRsiValueAtIndex(getLastCloseIndex());
         } else {
-            currentMacdOverRsiValue = macdOverRsiCloseValue;
+            currentMacdOverRsiValue = getMacdOverRsiValueAtIndex(getLastCloseIndex());
             prevMacdOverRsiValue = getMacdOverRsiValueAtIndex(getLastBeforeLastCloseIndex());
         }
         return crossType == UP
@@ -131,6 +133,10 @@ public class DataHolder {
 
     public int getLastBeforeLastCloseIndex() {
         return endIndex - 2;
+    }
+
+    public String getSymbol() {
+        return symbol;
     }
 
     public enum CandleType {
