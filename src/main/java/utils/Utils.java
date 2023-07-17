@@ -26,10 +26,16 @@ public class Utils {
     }
 
     public static ZonedDateTime getZonedDateTime(Long timestamp) {
-        return ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestamp),
-                ZoneId.systemDefault());
+        return ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault());
     }
 
+    public static String getTime(Long durationInMillis) {
+        long millis = durationInMillis % 1000;
+        long second = (durationInMillis / 1000) % 60;
+        long minute = (durationInMillis / (1000 * 60)) % 60;
+        long hour = (durationInMillis / (1000 * 60 * 60)) % 24;
+        return String.format("%02d:%02d:%02d.%d", hour, minute, second, millis);
+    }
     public static String getBuyingQtyAsString(double currentPrice, String symbol, int leverage, double requestedBuyingAmount) {
         double buyingQty = requestedBuyingAmount * leverage / currentPrice;
         return fixQuantity(BinanceInfo.formatQty(buyingQty, symbol));
