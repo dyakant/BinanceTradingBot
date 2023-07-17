@@ -4,9 +4,7 @@ import com.binance.client.model.enums.CandlestickInterval;
 import data.DataHolder;
 import singletonHelpers.BinanceInfo;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 
 import static utils.TimeConstants.*;
 
@@ -29,13 +27,16 @@ public class Utils {
         return ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault());
     }
 
-    public static String getTime(Long durationInMillis) {
-        long millis = durationInMillis % 1000;
-        long second = (durationInMillis / 1000) % 60;
-        long minute = (durationInMillis / (1000 * 60)) % 60;
-        long hour = (durationInMillis / (1000 * 60 * 60)) % 24;
-        return String.format("%02d:%02d:%02d.%d", hour, minute, second, millis);
+    public static String getTime(Long timestamp) {
+        Instant instant = Instant.ofEpochMilli(timestamp);
+        LocalTime localTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault()).toLocalTime();
+        return String.format("%02d:%02d:%02d.%d",
+                localTime.getHour(),
+                localTime.getMinute(),
+                localTime.getSecond(),
+                (timestamp % 1000));
     }
+
     public static String getBuyingQtyAsString(double currentPrice, String symbol, int leverage, double requestedBuyingAmount) {
         double buyingQty = requestedBuyingAmount * leverage / currentPrice;
         return fixQuantity(BinanceInfo.formatQty(buyingQty, symbol));
