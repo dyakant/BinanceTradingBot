@@ -6,7 +6,7 @@ import positions.SellingInstructions;
 import strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
 import utils.Trailer;
 
-import static positions.PositionHandler.ClosePositionTypes.SELL_LIMIT;
+import static positions.PositionHandler.ClosePositionTypes.CLOSE_LONG_LIMIT;
 import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE;
 
 /**
@@ -33,7 +33,7 @@ public class MACDOverRSILongExitStrategy3 extends MACDOverRSIBaseExitStrategy {
             }
             if (trailer.needToSell(currentPrice)) {
                 log.info("{} MACDOverRSILongExitStrategy3 executed, current={}, previous={}, third={}", realTimeData.getSymbol(), realTimeData.getMacdOverRsiCloseValue(), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex()), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2));
-                return new SellingInstructions(SELL_LIMIT, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
+                return new SellingInstructions(CLOSE_LONG_LIMIT, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
             }
         } else {
             if (changedDirectionAndPositiveThreeHistogram(realTimeData)) {

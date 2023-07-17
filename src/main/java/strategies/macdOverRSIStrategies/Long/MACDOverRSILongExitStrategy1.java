@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import positions.SellingInstructions;
 import strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
 
-import static positions.PositionHandler.ClosePositionTypes.SELL_MARKET;
+import static positions.PositionHandler.ClosePositionTypes.CLOSE_LONG_MARKET;
 import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE;
 
 /**
@@ -19,7 +19,7 @@ public class MACDOverRSILongExitStrategy1 extends MACDOverRSIBaseExitStrategy {
         boolean currentPriceBelowSMA = realTimeData.getCurrentPrice() < realTimeData.getSMAValueAtIndex(realTimeData.getLastCloseIndex());
         if (currentPriceBelowSMA) {
             log.info("{} MACDOverRSILongExitStrategy1 executed, currentPrice={}, SMAValueAtIndex({})={}", realTimeData.getSymbol(), realTimeData.getCurrentPrice(), realTimeData.getLastCloseIndex(), realTimeData.getSMAValueAtIndex(realTimeData.getLastCloseIndex()));
-            return new SellingInstructions(SELL_MARKET, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
+            return new SellingInstructions(CLOSE_LONG_MARKET, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
         }
         return null;
     }

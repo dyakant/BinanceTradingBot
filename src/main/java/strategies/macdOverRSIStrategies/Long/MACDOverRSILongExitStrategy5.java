@@ -6,7 +6,7 @@ import positions.SellingInstructions;
 import strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
 import utils.Trailer;
 
-import static positions.PositionHandler.ClosePositionTypes.SELL_MARKET;
+import static positions.PositionHandler.ClosePositionTypes.CLOSE_LONG_MARKET;
 import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE;
 
 @Slf4j
@@ -30,7 +30,7 @@ public class MACDOverRSILongExitStrategy5 extends MACDOverRSIBaseExitStrategy {
             trailer.updateTrailer(currentPrice);
             if (trailer.needToSell(currentPrice)) {
                 log.info("{} MACDOverRSILongExitStrategy3 change trailing true, current={}, previous={}, third={}", realTimeData.getSymbol(), realTimeData.getMacdOverRsiCloseValue(), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex()), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2));
-                return new SellingInstructions(SELL_MARKET, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
+                return new SellingInstructions(CLOSE_LONG_MARKET, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
             }
         }
         return null;
