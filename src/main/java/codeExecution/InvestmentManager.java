@@ -59,7 +59,7 @@ public class InvestmentManager implements Runnable {
                             try {
                                 positionHandler = entryStrategy.run(dataHolder, symbol);
                             } catch (Exception e) {
-                                log.error(e.toString());
+                                log.error("Error during processing strategy", e);
                             }
                             if (positionHandler != null) {
                                 TelegramMessenger.send(symbol, "Order executed by the strategy '" + entryStrategy.getName() + " / " + interval + "'");
@@ -68,7 +68,7 @@ public class InvestmentManager implements Runnable {
                         }
                     }
                 })),
-                System.out::println);
+                e -> log.error("", e));
     }
 
     public void addEntryStrategy(EntryStrategy entryStrategy) {

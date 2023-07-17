@@ -1,10 +1,6 @@
 package data;
 
-import codeExecution.TraderBot;
 import lombok.extern.slf4j.Slf4j;
-import org.telegram.telegrambots.meta.TelegramBotsApi;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -35,9 +31,8 @@ public class Config {
         printIntroLog();
         try {
             setPropValues();
-            registerTelegramBot();
         } catch (Exception e) {
-            log.error(e.toString());
+            log.error("Error during configuration: ", e);
         }
     }
 
@@ -57,15 +52,6 @@ public class Config {
             CANDLE_NUM = Integer.parseInt(prop.getProperty("CANDLE_NUM"));
             COMMAND = prop.getProperty("COMMAND");
         } catch (Exception e) {
-            log.error(e.toString());
-        }
-    }
-
-    private void registerTelegramBot() {
-        try {
-            TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(new TraderBot());
-        } catch (TelegramApiException e) {
             log.error(e.toString());
         }
     }

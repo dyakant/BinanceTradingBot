@@ -11,8 +11,6 @@ public class InputMessage {
     private String symbol;
     private CandlestickInterval interval;
     private EntryStrategy entryStrategy;
-    private String apiKey;
-    private String secretKey;
 
     public String processCommand(String input) {
         String returnValue = "";
@@ -35,7 +33,9 @@ public class InputMessage {
                 if (!BinanceInfo.isSymbolExists(symbol)) {
                     returnValue = "Wrong symbol";
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
+                    break;
                 }
+                returnValue = input + " - processed";
                 break;
 
             case RealTImeOperations.GET_CURRENT_BALANCE:
@@ -47,6 +47,7 @@ public class InputMessage {
             case RealTImeOperations.CLOSE_PROGRAM:
 
             case RealTImeOperations.GET_OPEN_POSITIONS:
+                returnValue =  input + " - processed";
                 break;
 
             case RealTImeOperations.ACTIVATE_STRATEGY:
@@ -78,6 +79,7 @@ public class InputMessage {
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                     break;
                 }
+                returnValue =  input + " - processed";
                 break;
 
             case "help":
@@ -100,8 +102,8 @@ public class InputMessage {
                 break;
 
             default:
-                returnValue = "Wrong operation";
                 operation = RealTImeOperations.UNKNOWN_OPERATION;
+                returnValue = operation + " - wrong operation";
         }
         return returnValue;
     }
@@ -128,13 +130,5 @@ public class InputMessage {
 
     public EntryStrategy getEntryStrategy() {
         return entryStrategy;
-    }
-
-    public String getApiKey() {
-        return apiKey;
-    }
-
-    public String getSecretKey() {
-        return secretKey;
     }
 }

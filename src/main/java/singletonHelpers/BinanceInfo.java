@@ -17,14 +17,12 @@ public class BinanceInfo {
     }
 
     private BinanceInfo() {
-        symbolInformation = new HashMap<>();
         SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
         exchangeInformation = syncRequestClient.getExchangeInformation();
-//        System.out.println("exchangeInformation: " + exchangeInformation);
+        symbolInformation = new HashMap<>();
         for (ExchangeInfoEntry exchangeInfoEntry : exchangeInformation.getSymbols()) {
             symbolInformation.put(exchangeInfoEntry.getSymbol().toLowerCase(), exchangeInfoEntry);
         }
-//        System.out.println("symbolInformation: " + symbolInformation);
     }
 
     public static BinanceInfo getBinanceInfo() {

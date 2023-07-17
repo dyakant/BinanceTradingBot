@@ -1,32 +1,55 @@
-package codeExecution;
+package singletonHelpers;
 
-import data.Config;
+import codeExecution.InputMessage;
+import codeExecution.RealTimeCommandOperator;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import static data.Config.TELEGRAM_API_TOKEN;
+import static data.Config.TELEGRAM_CHAT_ID;
+
 /**
- * Created by Anton Dyakov on 14.07.2023
+ * Telegram bot is connected with the chat
+ * It receives messages as commands and processes them.
+ * Also, it's used as singleton to send messages
+ *
+ * Created by Anton Dyakov on 17.07.2023
  */
 @Slf4j
-public class TraderBot extends TelegramLongPollingBot {
-    private static final String apiToken = Config.TELEGRAM_API_TOKEN;
+public class TelegramBot extends TelegramLongPollingBot {
     private final RealTimeCommandOperator realTimeCommandOperator;
 
-    public TraderBot() {
-        super(apiToken);
+    private static class TelegramBotHolder {
+        private static final TelegramBot telegramBot = new TelegramBot();
+    }
+
+    public static TelegramBot getTelegramBot() {
+        return TelegramBotHolder.telegramBot;
+    }
+
+    private TelegramBot() {
+        super(TELEGRAM_API_TOKEN);
         this.realTimeCommandOperator = new RealTimeCommandOperator();
+        try {
+            TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+            botsApi.registerBot(this);
+        } catch (TelegramApiException e) {
+            log.error("Error during telegram bot registering: ", e);
+        }
     }
 
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
+            if (chatIdIsWrong(update.getMessage().getChatId().toString())) return;
             var list = update.getMessage().getText().split(",");
             String result;
             if (list.length <= 1) {
@@ -34,16 +57,17 @@ public class TraderBot extends TelegramLongPollingBot {
             } else {
                 result = processBatchMessages(list);
             }
-            sendMessageToChat(result, update.getMessage().getChatId().toString());
+            TelegramMessenger.send(result);
+//            sendMessageToChat(result);
         }
     }
 
+    private boolean chatIdIsWrong(String chatId) {
+        return (!TELEGRAM_CHAT_ID.equals(chatId));
+    }
+
     private String proccessOneMessage(String command) {
-        String result = proccessMessage(command);
-        if (result.isEmpty() || result.isBlank()) {
-            result = "[" + command + "] processed successfully";
-        }
-        return result;
+        return proccessMessage(command);
     }
 
     private String processBatchMessages(String[] commands) {
@@ -57,15 +81,16 @@ public class TraderBot extends TelegramLongPollingBot {
     private String proccessMessage(String command) {
         InputMessage message = new InputMessage();
         String result = message.processCommand(command);
-        if (realTimeCommandOperator.getCommandsAndOps().containsKey(message.getOperation())) {
+        if (realTimeCommandOperator.getCommandsAndOps().containsKey(message.getOperation())) { // TODO; move to InputMessage
             realTimeCommandOperator.getCommandsAndOps().get(message.getOperation()).run(message);
         }
         return result;
     }
 
-    private void sendMessageToChat(String result, String chatId) {
+    public void sendMessageToChat(String result) {
         SendMessage message = new SendMessage();
-        message.setChatId(chatId);
+        message.setChatId(TELEGRAM_CHAT_ID);
+        message.enableMarkdownV2(true);
         message.setText(result);
         try {
             execute(message);
@@ -83,9 +108,5 @@ public class TraderBot extends TelegramLongPollingBot {
     public void onRegister() {
         super.onRegister();
         log.info("Telegram bot is registered");
-    }
-
-    public void run() {
-
     }
 }
