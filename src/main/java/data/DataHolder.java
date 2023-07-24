@@ -60,13 +60,16 @@ public class DataHolder {
 
     public double getMacdOverRsiValueAtIndex(int index) {
         return getMacdOverRsiMacdLineValueAtIndex(index) - getMacdOverRsiSignalLineValueAtIndex(index);
+        // macdOverRsiIndicator.getValue(index).doubleValue();
+//        new EMAIndicator(macdOverRsiIndicator, SIGNAL_LENGTH).getValue(index).doubleValue()
+
     }
 
-    private double getMacdOverRsiMacdLineValueAtIndex(int index) {
+    public double getMacdOverRsiMacdLineValueAtIndex(int index) {
         return macdOverRsiIndicator.getValue(index).doubleValue();
     }
 
-    private double getMacdOverRsiSignalLineValueAtIndex(int index) {
+    public double getMacdOverRsiSignalLineValueAtIndex(int index) {
         EMAIndicator signal = new EMAIndicator(macdOverRsiIndicator, SIGNAL_LENGTH);
         return signal.getValue(index).doubleValue();
     }

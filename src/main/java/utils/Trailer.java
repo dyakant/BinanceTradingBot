@@ -1,7 +1,11 @@
 package utils;
 
 import com.binance.client.model.enums.PositionSide;
+import lombok.extern.slf4j.Slf4j;
 
+import static com.binance.client.model.enums.PositionSide.LONG;
+
+@Slf4j
 public class Trailer {
     private double absoluteMaxPrice;
     private double exitPrice;
@@ -12,7 +16,7 @@ public class Trailer {
         absoluteMaxPrice = currentPrice;
         this.side = side;
         this.trailingPercentage = trailingPercentage;
-        if (side == PositionSide.LONG) {
+        if (side == LONG) {
             exitPrice = calculateLongTrailingExitPrices(absoluteMaxPrice, trailingPercentage);
         } else {
             exitPrice = calculateShortTrailingExitPrices(absoluteMaxPrice, trailingPercentage);
@@ -20,7 +24,8 @@ public class Trailer {
     }
 
     public void updateTrailer(double currentPrice) {
-        if (side == PositionSide.LONG) {
+        double prevAbsoluteMaxPrice = absoluteMaxPrice;
+        if (side == LONG) {
             if (currentPrice > absoluteMaxPrice) {
                 absoluteMaxPrice = currentPrice;
                 exitPrice = calculateLongTrailingExitPrices(absoluteMaxPrice, trailingPercentage);
@@ -31,10 +36,11 @@ public class Trailer {
                 exitPrice = calculateShortTrailingExitPrices(absoluteMaxPrice, trailingPercentage);
             }
         }
+        log.info("updateTrailer, side={}, prevAbsoluteMaxPrice={}, currentPrice={}, absoluteMaxPrice={}, exitPrice={}", side, prevAbsoluteMaxPrice, currentPrice, absoluteMaxPrice, exitPrice);
     }
 
     public boolean needToSell(double currentPrice) {
-        if (side == PositionSide.LONG) return currentPrice <= exitPrice;
+        if (side == LONG) return currentPrice <= exitPrice;
         else return currentPrice >= exitPrice;
     }
 

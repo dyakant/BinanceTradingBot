@@ -4,6 +4,7 @@ import com.binance.client.SyncRequestClient;
 import com.binance.client.model.enums.CandlestickInterval;
 import com.binance.client.model.event.CandlestickEvent;
 import com.binance.client.model.market.Candlestick;
+import lombok.extern.slf4j.Slf4j;
 import org.ta4j.core.BaseBarSeries;
 import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.RSIIndicator;
@@ -17,11 +18,14 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.*;
+import static utils.Utils.getZonedDateTime;
 
 //* For us, in realTimeData, the last candle is always open. The previous ones are closed.
+@Slf4j
 public class RealTimeData {
+    public static final int UPDATE_DATA_SKIP_EVENTS_COUNTER = 20;
     private Long lastCandleOpenTime;
-    private BaseBarSeries realTimeData;
+    private BaseBarSeries baseBarSeries;
     private double currentPrice;
     private RSIIndicator rsiIndicator;
     private MACDIndicator macdOverRsiIndicator;
@@ -29,7 +33,7 @@ public class RealTimeData {
     private int updateCounter = 0;
 
     public RealTimeData(String symbol, CandlestickInterval interval) {
-        realTimeData = new BaseBarSeries();
+        baseBarSeries = new BaseBarSeries();
         SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
         List<Candlestick> candlestickBars = syncRequestClient.getCandlestick(symbol, interval, null, null, Config.CANDLE_NUM);
         lastCandleOpenTime = candlestickBars.get(candlestickBars.size() - 1).getOpenTime();
@@ -47,21 +51,26 @@ public class RealTimeData {
      *
      * @param event - the new Candlestick received from the subscribeCandleStickEvent.
      */
-    public synchronized DataHolder updateData(CandlestickEvent event) {
+    public synchronized DataHolder updateData(String symbol, CandlestickEvent event) {
         boolean isNewCandle = updateLastCandle(event);
-        updateCounter += 1;
-        if (!isNewCandle && updateCounter != 20) {
+        log.info("{} CandlestickEvent received {}, isNewCandle={}, eventData: {}", symbol, updateCounter, isNewCandle, event);
+        if (!isNewCandle && updateCounter++ != UPDATE_DATA_SKIP_EVENTS_COUNTER) {
             return null;
         }
+        log.info("{} CandlestickEvent continue: \nbar[{}]: {}, \nbar[{}]: {}, \nbar[{}]: {}", symbol,
+                baseBarSeries.getEndIndex(), baseBarSeries.getBar(baseBarSeries.getEndIndex()),
+                baseBarSeries.getEndIndex() - 1, baseBarSeries.getBar(baseBarSeries.getEndIndex() - 1),
+                baseBarSeries.getEndIndex() - 2, baseBarSeries.getBar(baseBarSeries.getEndIndex() - 2));
         updateCounter = 0;
         calculateIndicators();
-        return new DataHolder(currentPrice, rsiIndicator, macdOverRsiIndicator, smaIndicator, realTimeData.getEndIndex());
+        log.info("{} CandlestickEvent indicators. rsiIndicator: {}, macdOverRsiIndicator: {}, smaIndicator: {}", symbol, rsiIndicator, macdOverRsiIndicator, smaIndicator);
+        return new DataHolder(symbol, currentPrice, rsiIndicator, macdOverRsiIndicator, smaIndicator, baseBarSeries.getEndIndex());
     }
 
     private boolean updateLastCandle(CandlestickEvent event) {
         currentPrice = event.getClose().doubleValue();
-        boolean isNewCandle = !(event.getStartTime().doubleValue() == lastCandleOpenTime);
-        ZonedDateTime closeTime = utils.Utils.getZonedDateTime(event.getCloseTime());
+        boolean isNewCandle = !(event.getStartTime().equals(lastCandleOpenTime));
+        ZonedDateTime closeTime = getZonedDateTime(event.getCloseTime());
         Duration candleDuration = Duration.ofMillis(event.getCloseTime() - event.getStartTime());
         double open = event.getOpen().doubleValue();
         double high = event.getHigh().doubleValue();
@@ -70,48 +79,45 @@ public class RealTimeData {
         double volume = event.getVolume().doubleValue();
         lastCandleOpenTime = event.getStartTime();
         if (isNewCandle) {
-            realTimeData = realTimeData.getSubSeries(1, realTimeData.getEndIndex() + 1);
+            baseBarSeries = baseBarSeries.getSubSeries(1, baseBarSeries.getEndIndex() + 1);
         } else {
-            realTimeData = realTimeData.getSubSeries(0, realTimeData.getEndIndex());
+            baseBarSeries = baseBarSeries.getSubSeries(0, baseBarSeries.getEndIndex());
         }
-        realTimeData.addBar(candleDuration, closeTime, open, high, low, close, volume);
+        baseBarSeries.addBar(candleDuration, closeTime, open, high, low, close, volume);
         return isNewCandle;
     }
 
     private void fillRealTimeData(List<Candlestick> candlestickBars) {
         for (Candlestick candlestickBar : candlestickBars) {
-            ZonedDateTime closeTime = utils.Utils.getZonedDateTime(candlestickBar.getCloseTime());
+            ZonedDateTime closeTime = getZonedDateTime(candlestickBar.getCloseTime());
             Duration candleDuration = Duration.ofMillis(candlestickBar.getCloseTime() - candlestickBar.getOpenTime());
             double open = candlestickBar.getOpen().doubleValue();
             double high = candlestickBar.getHigh().doubleValue();
             double low = candlestickBar.getLow().doubleValue();
             double close = candlestickBar.getClose().doubleValue();
             double volume = candlestickBar.getVolume().doubleValue();
-            realTimeData.addBar(candleDuration, closeTime, open, high, low, close, volume);
+            baseBarSeries.addBar(candleDuration, closeTime, open, high, low, close, volume);
         }
     }
 
     private void calculateIndicators() {
         rsiIndicator = calculateRSI(RSIConstants.RSI_CANDLE_NUM);
         macdOverRsiIndicator = calculateMacdOverRsi();
-        smaIndicator = new SMAIndicator(new ClosePriceIndicator(realTimeData), SMA_CANDLE_NUM);
+        smaIndicator = new SMAIndicator(new ClosePriceIndicator(baseBarSeries), SMA_CANDLE_NUM);
     }
 
     private RSIIndicator calculateRSI(int candleNum) {
-        ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(realTimeData);
+        ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(baseBarSeries);
         return new RSIIndicator(closePriceIndicator, candleNum);
     }
 
     private MACDIndicator calculateMacdOverRsi() {
-        RSIIndicator rsiIndicator14 = calculateRSI(RSI_CANDLE_NUM);
-        return new MACDIndicator(rsiIndicator14, FAST_BAR_COUNT, SLOW_BAR_COUNT);
+        RSIIndicator rsiIndicator = calculateRSI(RSI_CANDLE_NUM);
+        return new MACDIndicator(rsiIndicator, FAST_BAR_COUNT, SLOW_BAR_COUNT);
     }
 
     public double getCurrentPrice() {
         return currentPrice;
     }
 
-    public BaseBarSeries getRealTimeData() {
-        return realTimeData;
-    }
 }

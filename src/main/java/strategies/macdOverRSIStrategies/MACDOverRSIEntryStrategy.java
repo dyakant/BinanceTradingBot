@@ -37,6 +37,8 @@ import static data.DataHolder.IndicatorType.MACD_OVER_RSI;
 import static strategies.macdOverRSIStrategies.MACDOverRSIConstants.*;
 import static strategies.macdOverRSIStrategies.MACDOverRSIEntryStrategy.DecliningType.NEGATIVE;
 import static strategies.macdOverRSIStrategies.MACDOverRSIEntryStrategy.DecliningType.POSITIVE;
+import static utils.Utils.getBuyingQtyAsString;
+import static utils.Utils.getTime;
 
 @Slf4j
 public class MACDOverRSIEntryStrategy implements EntryStrategy {
@@ -81,18 +83,19 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
     private PositionHandler processDataWithRulesAndMakeOrder(DataHolder realTimeData, String symbol) {
         double currentPrice = realTimeData.getCurrentPrice();
         boolean isCurrentPriceAboveSMA = currentPrice > realTimeData.getSMAValueAtIndex(realTimeData.getLastIndex());
+        logMacdOverRsiValues(realTimeData, symbol);
         if (isCurrentPriceAboveSMA) {
             boolean isPreviousMacdCandleCrossedRsiUp = realTimeData.crossed(MACD_OVER_RSI, CLOSE, UP, ZERO);
             if (isPreviousMacdCandleCrossedRsiUp) {
                 if (bought) return null;
-                log.info("{} BUY LONG! MACDOverRSIEntryStrategy, isPreviousMacdCandleCrossedRsiUp={}", symbol, isPreviousMacdCandleCrossedRsiUp);
+                log.info("{} BUY LONG first branch", symbol);
                 return buyAndCreatePositionHandler(symbol, currentPrice, LONG);
             } else {
                 boolean macdValueBelowZero = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()) < ZERO;
                 boolean isMacdOverRsiGrows = decliningPyramid(realTimeData, NEGATIVE);
                 if (macdValueBelowZero && isMacdOverRsiGrows) {
                     if (bought) return null;
-                    log.info("{} BUY LONG! MACDOverRSIEntryStrategy, macdValueBelowZero={}, isMacdOverRsiGrows={}", symbol, realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()), isMacdOverRsiGrows);
+                    log.info("{} BUY LONG second branch", symbol);
                     return buyAndCreatePositionHandler(symbol, currentPrice, LONG);
                 }
             }
@@ -101,14 +104,14 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
             boolean isPreviousMacdCandleCrossedRsiDown = realTimeData.crossed(MACD_OVER_RSI, CLOSE, DOWN, ZERO);
             if (isPreviousMacdCandleCrossedRsiDown) {
                 if (bought) return null;
-                log.info("{} BUY SHORT! MACDOverRSIEntryStrategy, isPreviousMacdCandleCrossedRsiDown={}", symbol, isPreviousMacdCandleCrossedRsiDown);
+                log.info("{} BUY SHORT! first branch", symbol);
                 return buyAndCreatePositionHandler(symbol, currentPrice, SHORT);
             } else {
                 boolean macdValueAboveZero = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()) > ZERO;
                 boolean isMacdOverRsiFall = decliningPyramid(realTimeData, POSITIVE);
                 if (macdValueAboveZero && isMacdOverRsiFall) {
                     if (bought) return null;
-                    log.info("{} BUY SHORT! MACDOverRSIEntryStrategy, macdValueAboveZero={}, isMacdOverRsiFall={}", symbol, realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()), isMacdOverRsiFall);
+                    log.info("{} BUY SHORT! second branch", symbol);
                     return buyAndCreatePositionHandler(symbol, currentPrice, SHORT);
                 }
             }
@@ -117,24 +120,45 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
         return null;
     }
 
+    private void logMacdOverRsiValues(DataHolder realTimeData, String symbol) {
+        int last = realTimeData.getLastIndex(),
+                first = realTimeData.getLastIndex() - 1,
+                second = realTimeData.getLastIndex() - 2,
+                third = realTimeData.getLastIndex() - 3;
+        log.info("""
+                        {} MACDOverRSIEntryStrategy,\s
+                        [{}]:MacdLineValue={}, SignalLineValue={},
+                        [{}]:MacdLineValue={}, SignalLineValue={},
+                        [{}]:MacdLineValue={}, SignalLineValue={},
+                        [{}]:MacdLineValue={}, SignalLineValue={}""", symbol,
+                last, realTimeData.getMacdOverRsiMacdLineValueAtIndex(last), realTimeData.getMacdOverRsiSignalLineValueAtIndex(last),
+                first, realTimeData.getMacdOverRsiMacdLineValueAtIndex(first), realTimeData.getMacdOverRsiSignalLineValueAtIndex(first),
+                second, realTimeData.getMacdOverRsiMacdLineValueAtIndex(second), realTimeData.getMacdOverRsiSignalLineValueAtIndex(second),
+                third, realTimeData.getMacdOverRsiMacdLineValueAtIndex(third), realTimeData.getMacdOverRsiSignalLineValueAtIndex(third));
+    }
+
     private PositionHandler buyAndCreatePositionHandler(String symbol, Double currentPrice, PositionSide positionSide) {
         bought = true;
         PositionHandler positionHandler = null;
         try {
-            Order buyOrder;
+            Order order;
             ArrayList<ExitStrategy> exitStrategies;
-            String buyingQty = utils.Utils.getBuyingQtyAsString(currentPrice, symbol, leverage, requestedBuyingAmount);
-            TelegramMessenger.send(symbol, "buying " + positionSide.toString().toLowerCase() + ": " + buyingQty + ", price " + currentPrice);
+            String buyingQty = getBuyingQtyAsString(currentPrice, symbol, leverage, requestedBuyingAmount);
+//            TelegramMessenger.send(symbol, "buying " + positionSide.toString().toLowerCase() + ": " + buyingQty + ", price " + currentPrice);
             log.info("{} {}, buyingQty={}, currentPrice={}", symbol, positionSide.toString().toLowerCase(), buyingQty, currentPrice);
             if (positionSide == LONG) {
-                buyOrder = postOrder(symbol, BUY, currentPrice.toString(), buyingQty);
+                order = postOrder(symbol, BUY, currentPrice.toString(), buyingQty);
                 exitStrategies = defineLongExitStrategy(currentPrice);
             } else {
-                buyOrder = postOrder(symbol, SELL, currentPrice.toString(), buyingQty);
+                order = postOrder(symbol, SELL, currentPrice.toString(), buyingQty);
                 exitStrategies = defineShortExitStrategy(currentPrice);
             }
-            positionHandler = new PositionHandler(buyOrder, exitStrategies);
-            log.info("{}, buyOrder: {}", symbol, buyOrder);
+            positionHandler = new PositionHandler(order, exitStrategies);
+            String message = String.format("%s order to %s %s by %s was placed at %s",
+                    positionSide.toString().toLowerCase(), order.getSide().toLowerCase(),
+                    order.getOrigQty(), order.getPrice(), getTime(order.getUpdateTime()));
+            TelegramMessenger.send(symbol, message);
+            log.info("{}, buyOrder: {}", symbol, order);
         } catch (Exception e) {
             log.error(e.toString());
         }
