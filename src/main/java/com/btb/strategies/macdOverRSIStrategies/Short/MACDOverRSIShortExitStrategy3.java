@@ -1,14 +1,21 @@
 package com.btb.strategies.macdOverRSIStrategies.Short;
 
 import com.btb.data.DataHolder;
-import lombok.extern.slf4j.Slf4j;
 import com.btb.positions.SellingInstructions;
 import com.btb.strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
 import com.btb.utils.Trailer;
+import lombok.extern.slf4j.Slf4j;
 
 import static com.btb.positions.PositionHandler.ClosePositionTypes.CLOSE_SHORT_LIMIT;
 import static com.btb.strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE;
 
+/**
+ * Стратегия для закрытия позиции при шорте.
+ * Начинает слежение если гистограмма негативна, но направление начало меняться.
+ * Цена выхода будет обновляться.
+ * Если гистограмма по-прежнему негативна, то ок.
+ * Если гистограмма позитивна, и цена поднялась выше цены выхода, то закрыть позицию
+ */
 @Slf4j
 public class MACDOverRSIShortExitStrategy3 extends MACDOverRSIBaseExitStrategy {
     private boolean isTrailing = false;
@@ -20,23 +27,26 @@ public class MACDOverRSIShortExitStrategy3 extends MACDOverRSIBaseExitStrategy {
 
     @Override
     public SellingInstructions run(DataHolder realTimeData) {
+        log.trace("{} Enter MACDOverRSIShortExitStrategy3, isTrailing={}", realTimeData.getSymbol(), isTrailing);
         double currentPrice = realTimeData.getCurrentPrice();
         if (isTrailing) {
-            trailer.updateTrailer(currentPrice);
-            if (stayInTrackAndThreeNegativeHistograms(realTimeData)) {
-                log.info("{} MACDOverRSIShortExitStrategy3 change trailing false, current={}, previous={}, third={}", realTimeData.getSymbol(), realTimeData.getMacdOverRsiCloseValue(), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex()), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2));
+            trailer.updateExitPrice(currentPrice);
+            if (isNegativeHistogram(realTimeData)) {
+                log.trace("{} MACDOverRSIShortExitStrategy3 histogram is negative, break trailing", realTimeData.getSymbol());
                 isTrailing = false;
                 return null;
             }
             if (trailer.needToSell(currentPrice)) {
-                log.info("{} MACDOverRSIShortExitStrategy3 executed, current={}, previous={}, third={}", realTimeData.getSymbol(), realTimeData.getMacdOverRsiCloseValue(), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex()), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2));
+                log.info("{} MACDOverRSIShortExitStrategy3 close a position", realTimeData.getSymbol());
                 return new SellingInstructions(CLOSE_SHORT_LIMIT, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
+            } else {
+                log.trace("{} MACDOverRSIShortExitStrategy3 positive histogram, not a time to sell", realTimeData.getSymbol());
             }
         } else {
-            if (changedDirectionAndNegativeThreeHistogram(realTimeData)) {
-                log.info("{} MACDOverRSIShortExitStrategy3 change trailing true, current={}, previous={}, third={}", realTimeData.getSymbol(), realTimeData.getMacdOverRsiCloseValue(), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex()), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2));
-                isTrailing = true;
+            if (isDirectionChangedAndNegativeThreeHistogram(realTimeData)) {
+                log.trace("{} MACDOverRSIShortExitStrategy3 direction changed to positive, start trailing", realTimeData.getSymbol());
                 trailer.setAbsoluteMaxPrice(currentPrice);
+                isTrailing = true;
             }
         }
         return null;

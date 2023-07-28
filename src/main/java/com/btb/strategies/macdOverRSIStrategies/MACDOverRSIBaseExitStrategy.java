@@ -5,35 +5,47 @@ import com.btb.strategies.ExitStrategy;
 
 public abstract class MACDOverRSIBaseExitStrategy implements ExitStrategy {
 
-    public boolean changedDirectionAndPositiveThreeHistogram(DataHolder realTimeData) {
-        double current = realTimeData.getMacdOverRsiCloseValue();
-        double prev = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 1);
-        double third = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2);
-        boolean isCurrentBelowPrevious = Math.abs(current) <= Math.abs(prev);
-        return isCurrentBelowPrevious && current > 0 && prev > 0 && third > 0;
+    public boolean isDirectionChangedAndPositiveThreeHistogram(DataHolder realTimeData) {
+        return isCurrentAbsMACDLessPrevious(realTimeData) && isLastThreeMACDCandlesAboveZro(realTimeData);
     }
 
-    public boolean changedDirectionAndNegativeThreeHistogram(DataHolder realTimeData) {
-        double current = realTimeData.getMacdOverRsiCloseValue();
-        double prev = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 1);
-        double third = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2);
-        boolean isCurrentBelowPrevious = Math.abs(current) <= Math.abs(prev);
-        return isCurrentBelowPrevious && current < 0 && prev < 0 && third < 0;
+    public boolean isDirectionChangedAndNegativeThreeHistogram(DataHolder realTimeData) {
+        return isCurrentAbsMACDLessPrevious(realTimeData) && isLastThreeMACDCandlesBellowZero(realTimeData);
     }
 
-    public boolean stayInTrackAndThreePositiveHistograms(DataHolder realTimeData) {
-        double current = realTimeData.getMacdOverRsiCloseValue();
-        double prev = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 1);
-        double third = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2);
-        boolean isCurrentAbovePrevious = Math.abs(current) >= Math.abs(prev); // TODO: Is it correct?
-        return isCurrentAbovePrevious && current > 0 && prev > 0 && third > 0;
+    public boolean isPositiveHistogram(DataHolder data) {
+        return isCurrentAbsMACDGreaterOrEqualPrevious(data) && isLastThreeMACDCandlesAboveZro(data);
     }
 
-    public boolean stayInTrackAndThreeNegativeHistograms(DataHolder realTimeData) {
-        double current = realTimeData.getMacdOverRsiCloseValue();
-        double prev = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 1);
-        double third = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex() - 2);
-        boolean isCurrentAbovePrevious = Math.abs(current) >= Math.abs(prev); // TODO: Is it correct?
-        return isCurrentAbovePrevious && current < 0 && prev < 0 && third < 0;
+    public boolean isNegativeHistogram(DataHolder data) {
+        return isCurrentAbsMACDGreaterOrEqualPrevious(data) && isLastThreeMACDCandlesBellowZero(data);
+    }
+
+    private boolean isCurrentAbsMACDGreaterOrEqualPrevious(DataHolder realTimeData) {
+        return Math.abs(getPrevFirst(realTimeData)) >= Math.abs(getPrevSecond(realTimeData));
+    }
+
+    private boolean isCurrentAbsMACDLessPrevious(DataHolder realTimeData) {
+        return Math.abs(getPrevFirst(realTimeData)) < Math.abs(getPrevSecond(realTimeData));
+    }
+
+    private boolean isLastThreeMACDCandlesAboveZro(DataHolder data) {
+        return getPrevFirst(data) >= 0 && getPrevSecond(data) >= 0 && getPrevThird(data) >= 0;
+    }
+
+    private boolean isLastThreeMACDCandlesBellowZero(DataHolder data) {
+        return getPrevFirst(data) < 0 && getPrevSecond(data) < 0 && getPrevThird(data) < 0;
+    }
+
+    private double getPrevFirst(DataHolder data) {
+        return data.getMacdOverRsiValueAtIndex(data.getLastIndex() - 1);
+    }
+
+    private double getPrevSecond(DataHolder data) {
+        return data.getMacdOverRsiValueAtIndex(data.getLastIndex() - 2);
+    }
+
+    private double getPrevThird(DataHolder data) {
+        return data.getMacdOverRsiValueAtIndex(data.getLastIndex() - 3);
     }
 }

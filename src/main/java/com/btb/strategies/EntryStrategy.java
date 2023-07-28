@@ -7,13 +7,11 @@ public interface EntryStrategy {
     /**
      * @return Position entry if purchased coins else null.
      */
-    PositionHandler run(DataHolder realTimeData, String symbol);
+    PositionHandler run(DataHolder realTimeData);
 
     void setTakeProfitPercentage(double takeProfitPercentage);
 
     void setStopLossPercentage(double stopLossPercentage);
-
-//    void setLeverage(int leverage);
 
     void setRequestedBuyingAmount(double requestedBuyingAmount);
 

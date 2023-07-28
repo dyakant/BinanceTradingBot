@@ -1,9 +1,9 @@
 package com.btb.strategies.macdOverRSIStrategies.Long;
 
 import com.btb.data.DataHolder;
-import lombok.extern.slf4j.Slf4j;
 import com.btb.positions.SellingInstructions;
 import com.btb.strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
+import lombok.extern.slf4j.Slf4j;
 
 import static com.btb.data.DataHolder.CandleType.OPEN;
 import static com.btb.data.DataHolder.CrossType.DOWN;
@@ -20,9 +20,10 @@ import static com.btb.strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD
 public class MACDOverRSILongExitStrategy2 extends MACDOverRSIBaseExitStrategy {
     @Override
     public SellingInstructions run(DataHolder realTimeData) {
+        log.trace("{} Enter MACDOverRSILongExitStrategy2", realTimeData.getSymbol());
         boolean isOpenMacdCandleCrossedRsiDown = realTimeData.crossed(MACD_OVER_RSI, OPEN, DOWN, LONG_EXIT_OPEN_THRESHOLD);
         if (isOpenMacdCandleCrossedRsiDown) {
-            log.info("{} MACDOverRSILongExitStrategy2 executed, currentMacdOverRsiValue={}, prevMacdOverRsiValue={}", realTimeData.getSymbol(), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()), realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastCloseIndex()));
+            log.info("{} MACDOverRSILongExitStrategy2 close a position", realTimeData.getSymbol());
             return new SellingInstructions(CLOSE_LONG_LIMIT, MACD_OVER_RSI_EXIT_SELLING_PERCENTAGE);
         }
         return null;

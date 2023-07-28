@@ -5,15 +5,19 @@ import lombok.extern.slf4j.Slf4j;
 
 import static com.binance.client.model.enums.PositionSide.LONG;
 
+/**
+ * The combination of updateExitPrice() and needToSell() moves the exit price
+ * depending on trailingPercentage
+ */
 @Slf4j
 public class Trailer {
+    private final PositionSide side;
+    private final Double trailingPercentage;
     private double absoluteMaxPrice;
     private double exitPrice;
-    private PositionSide side;
-    private final Double trailingPercentage;
 
     public Trailer(double currentPrice, Double trailingPercentage, PositionSide side) {
-        absoluteMaxPrice = currentPrice;
+        this.absoluteMaxPrice = currentPrice;
         this.side = side;
         this.trailingPercentage = trailingPercentage;
         if (side == LONG) {
@@ -23,8 +27,7 @@ public class Trailer {
         }
     }
 
-    public void updateTrailer(double currentPrice) {
-        double prevAbsoluteMaxPrice = absoluteMaxPrice;
+    public void updateExitPrice(double currentPrice) {
         if (side == LONG) {
             if (currentPrice > absoluteMaxPrice) {
                 absoluteMaxPrice = currentPrice;
@@ -36,12 +39,19 @@ public class Trailer {
                 exitPrice = calculateShortTrailingExitPrices(absoluteMaxPrice, trailingPercentage);
             }
         }
-        log.info("updateTrailer, side={}, prevAbsoluteMaxPrice={}, currentPrice={}, absoluteMaxPrice={}, exitPrice={}", side, prevAbsoluteMaxPrice, currentPrice, absoluteMaxPrice, exitPrice);
+        log.trace("updateTrailer, side={}, currentPrice={}, absoluteMaxPrice={}, exitPrice={}", side, currentPrice, absoluteMaxPrice, exitPrice);
     }
 
+    /**
+     * if the current price crosses the exitPrice
+     * then it's time to close a position
+     * @param currentPrice current price
+     * @return boolean
+     */
     public boolean needToSell(double currentPrice) {
-        if (side == LONG) return currentPrice <= exitPrice;
-        else return currentPrice >= exitPrice;
+        return (side == LONG)
+                ? currentPrice <= exitPrice
+                : currentPrice >= exitPrice;
     }
 
     private double calculateShortTrailingExitPrices(double highestPrice, Double trailingPercentage) {
@@ -52,32 +62,7 @@ public class Trailer {
         return highestPrice - (highestPrice * trailingPercentage / 100);
     }
 
-    public double getAbsoluteMaxPrice() {
-        return absoluteMaxPrice;
-    }
-
     public void setAbsoluteMaxPrice(double absoluteMaxPrice) {
         this.absoluteMaxPrice = absoluteMaxPrice;
     }
-
-    public double getExitPrice() {
-        return exitPrice;
-    }
-
-    public void setExitPrice(double exitPrice) {
-        this.exitPrice = exitPrice;
-    }
-
-    public PositionSide getSide() {
-        return side;
-    }
-
-    public void setSide(PositionSide side) {
-        this.side = side;
-    }
-
-    public Double getTrailingPercentage() {
-        return trailingPercentage;
-    }
-
 }

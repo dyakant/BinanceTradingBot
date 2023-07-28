@@ -5,16 +5,18 @@ import com.binance.client.model.enums.OrderSide;
 import com.binance.client.model.enums.OrderType;
 import com.binance.client.model.trade.Order;
 import com.btb.data.DataHolder;
-import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import com.btb.positions.PositionHandler;
 import com.btb.singletonHelpers.RequestClient;
 import com.btb.singletonHelpers.TelegramMessenger;
 import com.btb.strategies.EntryStrategy;
+import com.btb.strategies.EntryStrategyType;
 import com.btb.strategies.ExitStrategy;
 import com.btb.strategies.PositionInStrategy;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import static com.binance.client.model.enums.NewOrderRespType.RESULT;
 import static com.binance.client.model.enums.OrderSide.BUY;
@@ -32,7 +34,8 @@ import static com.btb.utils.Utils.*;
 
 @Slf4j
 public class RSIEntryStrategy implements EntryStrategy {
-    public static final String NAME = "rsi";
+    public final String name = EntryStrategyType.RSI.getName();
+    public final String symbol;
     private final SyncRequestClient syncRequestClient;
     double takeProfitPercentage = TAKE_PROFIT_PERCENTAGE;
     private double stopLossPercentage = STOP_LOSS_PERCENTAGE;
@@ -43,11 +46,13 @@ public class RSIEntryStrategy implements EntryStrategy {
     double rsiValueToCheckForPosition3 = -1;
 
     public RSIEntryStrategy(String symbol) {
-         syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
+        syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
         syncRequestClient.changeInitialLeverage(symbol, leverage);
+        this.symbol = symbol;
     }
 
-    public synchronized PositionHandler run(DataHolder realTimeData, String symbol) {
+    @Override
+    public synchronized PositionHandler run(DataHolder realTimeData) {
         if (positionInStrategy == POSITION_ONE) {
             if (realTimeData.crossed(RSI, CLOSE, DOWN, RSI_ENTRY_THRESHOLD_1)) {
                 positionInStrategy = POSITION_TWO;
@@ -145,6 +150,19 @@ public class RSIEntryStrategy implements EntryStrategy {
 
     @Override
     public String getName() {
-        return NAME;
+        return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RSIEntryStrategy that = (RSIEntryStrategy) o;
+        return Objects.equals(name, that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
     }
 }
