@@ -1,22 +1,18 @@
 package com.btb.codeExecution;
 
-import com.binance.client.SyncRequestClient;
+import com.binance.client.model.ResponseResult;
 import com.binance.client.model.enums.CandlestickInterval;
-import com.binance.client.model.enums.NewOrderRespType;
-import com.binance.client.model.enums.OrderSide;
-import com.binance.client.model.enums.OrderType;
 import com.binance.client.model.trade.MyTrade;
 import com.binance.client.model.trade.Order;
 import com.binance.client.model.trade.Position;
 import com.btb.data.AccountBalance;
-import com.btb.data.Config;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import com.btb.singletonHelpers.ExecService;
 import com.btb.singletonHelpers.RequestClient;
 import com.btb.singletonHelpers.SubClient;
 import com.btb.singletonHelpers.TelegramMessenger;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,8 +21,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.binance.client.model.enums.OrderSide.BUY;
+import static com.binance.client.model.enums.OrderSide.SELL;
+import static com.binance.client.model.enums.OrderType.MARKET;
+import static com.binance.client.model.enums.PositionSide.LONG;
+
 @Slf4j
 public class RealTimeCommandOperator {
+    private final RequestClient requestClient = RequestClient.getRequestClient();
     private final HashMap<String, RealTimeOperation> commandsAndOps;
     private final HashMap<Pair<String, CandlestickInterval>, InvestmentManager> investmentManagerHashMap;
     private final ReadWriteLock investmentManagerHashMapLock = new ReentrantReadWriteLock();
@@ -36,20 +38,17 @@ public class RealTimeCommandOperator {
         commandsAndOps = new HashMap<>();
 
         commandsAndOps.put(RealTImeOperations.CANCEL_ALL_ORDERS, (message) -> {
-            SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
-            syncRequestClient.cancelAllOpenOrder(message.getSymbol());
+            ResponseResult result = requestClient.cancelAllOpenOrder(message.getSymbol());
+            TelegramMessenger.send("Orders were canceled: " + result);
         });
 
         commandsAndOps.put(RealTImeOperations.CLOSE_ALL_POSITIONS, (message) -> {
             List<Position> openPositions = AccountBalance.getAccountBalance().getOpenPositions();
             for (Position openPosition : openPositions) {
-                SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
-                if (!openPosition.getPositionSide().equals("SHORT")) {
-                    syncRequestClient.postOrder(openPosition.getSymbol().toLowerCase(), OrderSide.SELL, null, OrderType.MARKET, null,
-                            openPosition.getPositionAmt().toString(), null, Config.REDUCE_ONLY, null, null, null, null, null, null, null, NewOrderRespType.RESULT);
+                if (LONG.toString().equals(openPosition.getPositionSide())) {
+                    requestClient.postOrder(openPosition.getSymbol().toLowerCase(), SELL, MARKET, openPosition.getPositionAmt().toString(), null);
                 } else {
-                    syncRequestClient.postOrder(openPosition.getSymbol().toLowerCase(), OrderSide.BUY, null, OrderType.MARKET, null,
-                            openPosition.getPositionAmt().toString(), null, Config.REDUCE_ONLY, null, null, null, null, null, null, null, NewOrderRespType.RESULT);
+                    requestClient.postOrder(openPosition.getSymbol().toLowerCase(), BUY, MARKET, openPosition.getPositionAmt().toString(), null);
                 }
             }
         });
@@ -58,8 +57,13 @@ public class RealTimeCommandOperator {
             Pair<String, CandlestickInterval> pair = new MutablePair<>(message.getSymbol(), message.getInterval());
             investmentManagerHashMapLock.readLock().lock();
             if (investmentManagerHashMap.containsKey(pair)) {
-                investmentManagerHashMap.get(pair).addEntryStrategy(message.getEntryStrategy());
-                investmentManagerHashMapLock.readLock().unlock();
+                if (investmentManagerHashMap.get(pair).getStrategyName().equals(message.getEntryStrategy().getName())) {
+                    investmentManagerHashMapLock.readLock().unlock();
+                    TelegramMessenger.send(message.getSymbol(), "this strategy is already added");
+                } else {
+                    investmentManagerHashMap.get(pair).addEntryStrategy(message.getEntryStrategy());
+                    investmentManagerHashMapLock.readLock().unlock();
+                }
             } else {
                 investmentManagerHashMapLock.readLock().unlock();
                 investmentManagerHashMapLock.writeLock().lock();
@@ -67,7 +71,7 @@ public class RealTimeCommandOperator {
                 investmentManagerHashMap.put(pair, investmentManager);
                 investmentManagerHashMapLock.writeLock().unlock();
                 TelegramMessenger.send(message.getSymbol(), "activate strategy '" + message.getEntryStrategy().getName() +
-                        " / " + message.getInterval() + "', balance: " + AccountBalance.getBalanceUsdt());
+                        " / " + message.getInterval() + "'");
                 investmentManager.run();
             }
         });
@@ -76,9 +80,12 @@ public class RealTimeCommandOperator {
             Pair<String, CandlestickInterval> pair = new MutablePair<>(message.getSymbol(), message.getInterval());
             investmentManagerHashMapLock.readLock().lock();
             if (investmentManagerHashMap.containsKey(pair)) {
+                log.debug("Remove strategy");
                 investmentManagerHashMap.get(pair).removeEntryStrategy(message.getEntryStrategy());
             }
             investmentManagerHashMapLock.readLock().unlock();
+            TelegramMessenger.send(message.getSymbol(), "strategy '" + message.getEntryStrategy().getName() +
+                    " / " + message.getInterval() + "' removed");
         });
 
         commandsAndOps.put(RealTImeOperations.SHOW_STRATEGIES, (message) -> {
@@ -87,46 +94,51 @@ public class RealTimeCommandOperator {
                     .filter((k) -> k.getKey().getKey().equals(message.getSymbol()))
                     .map(o -> o.getKey() + ": " + o.getValue().getStrategyName() + " / " + o.getKey().getValue())
                     .toList();
-            TelegramMessenger.send(list.toString());
             investmentManagerHashMapLock.readLock().unlock();
+            TelegramMessenger.send("Active strategies:\n" + String.join("\n", list));
         });
 
         commandsAndOps.put(RealTImeOperations.SHOW_ALL_STRATEGIES, (message) -> {
             investmentManagerHashMapLock.readLock().lock();
             List<String> list = investmentManagerHashMap.entrySet().stream()
-                    .map(o -> o.getKey() + ": " + o.getValue().getStrategyName() + " / " + o.getKey().getValue())
+                    .map(o -> o.getKey().getKey() + ": " + o.getValue().getStrategyName() + " / " + o.getKey().getValue())
                     .toList();
-            TelegramMessenger.send(list.toString());
             investmentManagerHashMapLock.readLock().unlock();
+            TelegramMessenger.send("Active strategies:\n" + String.join("\n", list));
         });
 
         commandsAndOps.put(RealTImeOperations.GET_LAST_TRADES, (message) -> {
-            SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
-            List<MyTrade> myTrades = syncRequestClient.getAccountTrades(message.getSymbol(), null, null, null, 100);
+            List<MyTrade> list = requestClient.getAccountTrades(message.getSymbol());
+            StringBuilder stringBuilder = new StringBuilder();
             int index = 1;
-            for (MyTrade trade : myTrades) {
-                System.out.println("Trade " + index + ": " + trade);
-                index++;
+            stringBuilder.append("Last trades:\n");
+            for (MyTrade trade : list) {
+                stringBuilder.append(index++).append(": ").append(trade).append("\n");
             }
+            TelegramMessenger.send(stringBuilder.toString());
         });
 
         commandsAndOps.put(RealTImeOperations.GET_OPEN_POSITIONS, (message) -> {
             List<Position> openPositions = AccountBalance.getAccountBalance().getOpenPositions();
+            StringBuilder stringBuilder = new StringBuilder();
             int index = 1;
+            stringBuilder.append("Open positions:\n");
             for (Position openPosition : openPositions) {
-                System.out.println("Open position " + index + ": " + openPosition);
-                index++;
+                stringBuilder.append(index++).append(": ").append(openPosition).append("\n");
             }
+            log.info(stringBuilder.toString());
+            TelegramMessenger.send(stringBuilder.toString());
         });
 
         commandsAndOps.put(RealTImeOperations.GET_OPEN_ORDERS, (message) -> {
-            SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
-            List<Order> openOrders = syncRequestClient.getOpenOrders(message.getSymbol());
+            List<Order> openOrders = requestClient.getOpenOrders(message.getSymbol());
+            StringBuilder stringBuilder = new StringBuilder();
             int index = 1;
+            stringBuilder.append("Open orders:\n");
             for (Order openOrder : openOrders) {
-                System.out.println("Open order: " + index + ": " + openOrder);
-                index++;
+                stringBuilder.append(index++).append(": ").append(openOrder).append("\n");
             }
+            TelegramMessenger.send(stringBuilder.toString());
         });
 
         commandsAndOps.put(RealTImeOperations.GET_CURRENT_BALANCE, (message) ->

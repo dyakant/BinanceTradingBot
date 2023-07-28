@@ -6,6 +6,9 @@ import com.btb.strategies.EntryStrategy;
 import com.btb.strategies.macdOverRSIStrategies.MACDOverRSIEntryStrategy;
 import com.btb.strategies.rsiStrategies.RSIEntryStrategy;
 
+import static com.btb.strategies.EntryStrategyType.MACD;
+import static com.btb.strategies.EntryStrategyType.RSI;
+
 public class InputMessage {
     public String operation = RealTImeOperations.UNKNOWN_OPERATION;
     private String symbol;
@@ -38,16 +41,17 @@ public class InputMessage {
                 returnValue = input + " - processed";
                 break;
 
-            case RealTImeOperations.GET_CURRENT_BALANCE:
-
-            case RealTImeOperations.SHOW_ALL_STRATEGIES:
-
             case RealTImeOperations.CLOSE_ALL_POSITIONS:
 
             case RealTImeOperations.CLOSE_PROGRAM:
 
             case RealTImeOperations.GET_OPEN_POSITIONS:
-                returnValue =  input + " - processed";
+                returnValue = input + " - processed";
+                break;
+
+            case RealTImeOperations.GET_CURRENT_BALANCE:
+
+            case RealTImeOperations.SHOW_ALL_STRATEGIES:
                 break;
 
             case RealTImeOperations.ACTIVATE_STRATEGY:
@@ -79,7 +83,6 @@ public class InputMessage {
                     operation = RealTImeOperations.UNKNOWN_OPERATION;
                     break;
                 }
-                returnValue =  input + " - processed";
                 break;
 
             case "help":
@@ -109,11 +112,13 @@ public class InputMessage {
     }
 
     private EntryStrategy stringToEntryStrategy(String strategyName, String symbol) {
-        return switch (strategyName) {
-            case RSIEntryStrategy.NAME -> new RSIEntryStrategy(symbol);
-            case MACDOverRSIEntryStrategy.NAME -> new MACDOverRSIEntryStrategy(symbol);
-            default -> null;
-        };
+        if (RSI.getName().equals(strategyName)) {
+            return new RSIEntryStrategy(symbol);
+        } else if (MACD.getName().equals(strategyName)) {
+            return new MACDOverRSIEntryStrategy(symbol);
+        } else {
+            return null;
+        }
     }
 
     public String getSymbol() {
