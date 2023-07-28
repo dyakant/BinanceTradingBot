@@ -1,46 +1,41 @@
 package com.btb.positions;
 
-import com.binance.client.SyncRequestClient;
 import com.binance.client.model.ResponseResult;
 import com.binance.client.model.enums.CandlestickInterval;
 import com.binance.client.model.enums.OrderSide;
 import com.binance.client.model.trade.Order;
 import com.btb.data.AccountBalance;
 import com.btb.data.DataHolder;
-import lombok.extern.slf4j.Slf4j;
-import com.btb.singletonHelpers.BinanceInfo;
 import com.btb.singletonHelpers.RequestClient;
 import com.btb.singletonHelpers.TelegramMessenger;
 import com.btb.strategies.ExitStrategy;
-import com.btb.utils.Utils;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import static com.binance.client.model.enums.NewOrderRespType.RESULT;
 import static com.binance.client.model.enums.OrderSide.BUY;
 import static com.binance.client.model.enums.OrderSide.SELL;
 import static com.binance.client.model.enums.OrderType.LIMIT;
 import static com.binance.client.model.enums.OrderType.MARKET;
-import static com.binance.client.model.enums.PositionSide.*;
-import static com.binance.client.model.enums.TimeInForce.GTC;
-import static com.binance.client.model.enums.WorkingType.CONTRACT_PRICE;
-import static com.binance.client.model.enums.WorkingType.MARK_PRICE;
+import static com.binance.client.model.enums.PositionSide.LONG;
+import static com.binance.client.model.enums.PositionSide.SHORT;
 import static com.btb.data.Config.*;
-import static com.btb.utils.Utils.candleStickIntervalToMilliseconds;
-import static com.btb.utils.Utils.getTime;
+import static com.btb.singletonHelpers.BinanceInfo.formatQty;
+import static com.btb.utils.Utils.*;
 
 @Slf4j
 public class PositionHandler implements Serializable {
-    private final SyncRequestClient syncRequestClient;
+    private final RequestClient requestClient;
+    //    private final SyncRequestClient syncRequestClient;
     private final AccountBalance accountBalance;
     private String clientOrderId;
     private Long orderID;
     private double qty = 0;
     private final String symbol;
     private volatile boolean isActive = false;
-    private String status = NEW;
+    private String status;
     private final ArrayList<ExitStrategy> exitStrategies;
     private Long baseTime = 0L;
     private volatile boolean rebuying = true;
@@ -48,12 +43,13 @@ public class PositionHandler implements Serializable {
     private volatile boolean terminated = false;
 
     public PositionHandler(Order order, ArrayList<ExitStrategy> _exitStrategies) {
-        syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
+        requestClient = RequestClient.getRequestClient();
         accountBalance = AccountBalance.getAccountBalance();
         clientOrderId = order.getClientOrderId();
         orderID = order.getOrderId();
         symbol = order.getSymbol().toLowerCase();
         exitStrategies = _exitStrategies;
+        status = order.getStatus();
     }
 
     public synchronized boolean isSoldOut() {
@@ -75,7 +71,7 @@ public class PositionHandler implements Serializable {
     public synchronized void update(DataHolder realTimeData, CandlestickInterval interval) {
         rebuying = false;
         try {
-            Order order = syncRequestClient.getOrder(symbol, orderID, clientOrderId);
+            Order order = requestClient.getOrder(symbol, orderID, clientOrderId);
             log.info("{} Update order information, order={}", symbol, order);
             if (NEW.equals(status) && FILLED.equals(order.getStatus())) { // TODO: Place it in isActive()
                 String message = String.format("order was executed at %s", getTime(order.getUpdateTime()));
@@ -115,10 +111,10 @@ public class PositionHandler implements Serializable {
         rebuying = true;
         try {
             log.info("{} rebuyOrder, order={}", symbol, order);
-            ResponseResult rr = syncRequestClient.cancelAllOpenOrder(symbol);
+            ResponseResult rr = requestClient.cancelAllOpenOrder(symbol);
             log.info("{} All orders were cancelled with result {} {}", symbol, rr.getCode(), rr.getMsg());
             OrderSide side = stringToOrderSide(order.getSide());
-            Order buyOrder = postOrder(side, order.getOrigQty().toString());
+            Order buyOrder = requestClient.postOrder(symbol, side, MARKET, order.getOrigQty().toString(), String.valueOf(order.getPrice()));
             log.info("{} rebuying order is placed {}", symbol, buyOrder);
             clientOrderId = buyOrder.getClientOrderId();
             orderID = buyOrder.getOrderId();
@@ -131,32 +127,12 @@ public class PositionHandler implements Serializable {
 
     private synchronized void cancelOrder() {
         try {
-            Order order = syncRequestClient.cancelOrder(symbol, orderID, clientOrderId);
+            Order order = requestClient.cancelOrder(symbol, orderID, clientOrderId);
             log.info("{} cancel order, order: {}", symbol, order);
             TelegramMessenger.send(symbol, "cancel order, {}" + order);
         } catch (Exception e) {
             log.error("{} Error during canceling order", symbol, e);
         }
-    }
-
-    private Order postOrder(OrderSide side, String origQty) {
-        return syncRequestClient.postOrder(
-                symbol,
-                side,
-                null,
-                MARKET,
-                null,
-                origQty,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                MARK_PRICE,
-                null,
-                RESULT);
     }
 
     private OrderSide stringToOrderSide(String side) {
@@ -167,53 +143,30 @@ public class PositionHandler implements Serializable {
     }
 
     private double percentageOfQuantity(double percentage) {
-        return qty * percentage;
+        return (qty * percentage) / 100;
     }
 
     public void terminate() {
         if (!terminated) {
             terminated = true;
-            syncRequestClient.cancelAllOpenOrder(symbol);
-            TelegramMessenger.send(symbol, "Position closed!, balance:  " + AccountBalance.getBalanceUsdt());
+            requestClient.cancelAllOpenOrder(symbol);
+            TelegramMessenger.send(symbol, "Position closed!\nBalance:  " + AccountBalance.getBalanceUsdt());
         }
     }
 
     private void closePosition(SellingInstructions sellingInstructions, DataHolder realTimeData) {
-        String sellingQty = Utils.fixQuantity(BinanceInfo.formatQty(percentageOfQuantity(sellingInstructions.getSellingQtyPercentage()), symbol));
+        String sellingQty = fixQuantity(formatQty(percentageOfQuantity(sellingInstructions.getSellingQtyPercentage()), symbol));
         try {
             Order order = null;
             String currentPrice = realTimeData.getCurrentPrice().toString();
             log.info("{} closePosition with type {}", symbol, sellingInstructions.getType());
             switch (sellingInstructions.getType()) {
-
-                case STAY_IN_POSITION:
-                    break;
-
-                case CLOSE_LONG_LIMIT:
-                    order = syncRequestClient.postOrder(symbol, SELL, BOTH, LIMIT, GTC, sellingQty, currentPrice,
-                            REDUCE_ONLY, null, null, null, null,
-                            null, MARK_PRICE, null, RESULT);
-                    break;
-
-                case CLOSE_LONG_MARKET:
-                    order = syncRequestClient.postOrder(symbol, SELL, BOTH, MARKET, null, sellingQty, null,
-                            null, null, null, null, null,
-                            null, CONTRACT_PRICE, null, RESULT);
-                    break;
-
-                case CLOSE_SHORT_LIMIT:
-                    order = syncRequestClient.postOrder(symbol, BUY, BOTH, LIMIT, GTC, sellingQty, currentPrice,
-                            REDUCE_ONLY, null, null, null, null,
-                            null, MARK_PRICE, null, RESULT);
-                    break;
-
-                case CLOSE_SHORT_MARKET:
-                    order = syncRequestClient.postOrder(symbol, BUY, BOTH, MARKET, null, sellingQty, null,
-                            null, null, null, null, null,
-                            null, CONTRACT_PRICE, null, RESULT);
-                    break;
-
-                default:
+                case CLOSE_LONG_LIMIT -> order = requestClient.postOrder(symbol, SELL, LIMIT, sellingQty, currentPrice);
+                case CLOSE_LONG_MARKET -> order = requestClient.postOrder(symbol, SELL, MARKET, sellingQty, null);
+                case CLOSE_SHORT_LIMIT -> order = requestClient.postOrder(symbol, BUY, LIMIT, sellingQty, currentPrice);
+                case CLOSE_SHORT_MARKET -> order = requestClient.postOrder(symbol, BUY, MARKET, sellingQty, null);
+                case STAY_IN_POSITION, default -> {
+                }
             }
             if (Objects.nonNull(order)) {
                 log.info("{} position closed, order: {}", symbol, order);
@@ -223,8 +176,8 @@ public class PositionHandler implements Serializable {
                 TelegramMessenger.send(symbol, "Not done. " + sellingInstructions.getType());
             }
         } catch (Exception e) {
-            TelegramMessenger.send(symbol, "Exception happened");
             log.error("Exception during closePosition: ", e);
+            TelegramMessenger.send(symbol, "Exception happened");
         }
     }
 
