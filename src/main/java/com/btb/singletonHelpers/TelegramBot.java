@@ -20,7 +20,7 @@ import static com.btb.data.Config.TELEGRAM_CHAT_ID;
  * Telegram bot is connected with the chat
  * It receives messages as commands and processes them.
  * Also, it's used as singleton to send messages
- *
+ * <p>
  * Created by Anton Dyakov on 17.07.2023
  */
 @Slf4j
@@ -57,8 +57,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             } else {
                 result = processBatchMessages(list);
             }
-            TelegramMessenger.send(result);
-//            sendMessageToChat(result);
+            if (!result.isEmpty() && !result.isBlank()) {
+                TelegramMessenger.send(result);
+            }
         }
     }
 
