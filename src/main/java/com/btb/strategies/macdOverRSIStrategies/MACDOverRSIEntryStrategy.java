@@ -11,7 +11,7 @@ import com.btb.strategies.EntryStrategy;
 import com.btb.strategies.ExitStrategy;
 import com.btb.strategies.macdOverRSIStrategies.Long.*;
 import com.btb.strategies.macdOverRSIStrategies.Short.*;
-import com.btb.utils.Trailer;
+import com.btb.data.Trailer;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 

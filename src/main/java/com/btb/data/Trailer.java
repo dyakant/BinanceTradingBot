@@ -1,4 +1,4 @@
-package com.btb.utils;
+package com.btb.data;
 
 import com.binance.client.model.enums.PositionSide;
 import lombok.extern.slf4j.Slf4j;

@@ -3,7 +3,7 @@ package com.btb.strategies.macdOverRSIStrategies.Long;
 import com.btb.data.DataHolder;
 import com.btb.positions.SellingInstructions;
 import com.btb.strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
-import com.btb.utils.Trailer;
+import com.btb.data.Trailer;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.btb.positions.PositionHandler.ClosePositionTypes.CLOSE_LONG_LIMIT;
