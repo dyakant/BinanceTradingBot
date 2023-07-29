@@ -35,7 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
-data/
+
 
 target/
 logs/
