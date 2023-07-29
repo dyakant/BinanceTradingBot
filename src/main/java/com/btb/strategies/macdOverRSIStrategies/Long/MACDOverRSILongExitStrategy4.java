@@ -1,6 +1,6 @@
 package com.btb.strategies.macdOverRSIStrategies.Long;
 
-import com.btb.data.DataHolder;
+import com.btb.data.RealTimeData;
 import lombok.extern.slf4j.Slf4j;
 import com.btb.positions.SellingInstructions;
 import com.btb.strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
@@ -26,7 +26,7 @@ public class MACDOverRSILongExitStrategy4 extends MACDOverRSIBaseExitStrategy {
     }
 
     @Override
-    public SellingInstructions run(DataHolder realTimeData) {
+    public SellingInstructions run(RealTimeData realTimeData) {
         log.trace("{} Enter MACDOverRSILongExitStrategy4, isTrailing={}", realTimeData.getSymbol(), isTrailing);
         double currentPrice = realTimeData.getCurrentPrice();
         if (isTrailing) {

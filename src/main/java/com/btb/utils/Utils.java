@@ -1,7 +1,7 @@
 package com.btb.utils;
 
 import com.binance.client.model.enums.CandlestickInterval;
-import com.btb.data.DataHolder;
+import com.btb.data.RealTimeData;
 import com.btb.singletonHelpers.BinanceInfo;
 
 import java.time.*;
@@ -42,13 +42,13 @@ public class Utils {
         return fixQuantity(BinanceInfo.formatQty(buyingQty, symbol));
     }
 
-    public static String getTakeProfitPriceAsString(DataHolder realTimeData, String symbol, double takeProfitPercentage) {
-        double takeProfitPrice = realTimeData.getCurrentPrice() + realTimeData.getCurrentPrice() * takeProfitPercentage;
+    public static String getTakeProfitPriceAsString(RealTimeData data, String symbol, double takeProfitPercentage) {
+        double takeProfitPrice = data.getCurrentPrice() + data.getCurrentPrice() * takeProfitPercentage;
         return BinanceInfo.formatPrice(takeProfitPrice, symbol);
     }
 
-    public static String getStopLossPriceAsString(DataHolder realTimeData, String symbol, double stopLossPercentage) {
-        double stopLossPrice = realTimeData.getCurrentPrice() - realTimeData.getCurrentPrice() * stopLossPercentage;
+    public static String getStopLossPriceAsString(RealTimeData data, String symbol, double stopLossPercentage) {
+        double stopLossPrice = data.getCurrentPrice() - data.getCurrentPrice() * stopLossPercentage;
         return BinanceInfo.formatPrice(stopLossPrice, symbol);
     }
 

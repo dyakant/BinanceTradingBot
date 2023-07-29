@@ -1,6 +1,6 @@
 package com.btb.strategies.macdOverRSIStrategies.Long;
 
-import com.btb.data.DataHolder;
+import com.btb.data.RealTimeData;
 import com.btb.positions.SellingInstructions;
 import com.btb.strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +15,7 @@ import static com.btb.strategies.macdOverRSIStrategies.MACDOverRSIConstants.MACD
 @Slf4j
 public class MACDOverRSILongExitStrategy1 extends MACDOverRSIBaseExitStrategy {
     @Override
-    public SellingInstructions run(DataHolder data) {
+    public SellingInstructions run(RealTimeData data) {
         log.trace("{} Enter MACDOverRSILongExitStrategy1", data.getSymbol());
         double previousSMAValue = data.getSMAValueAtIndex(data.getLastIndex() - 1);
         boolean currentPriceBelowPreviousSMA = data.getCurrentPrice() < previousSMAValue;

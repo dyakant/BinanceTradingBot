@@ -4,7 +4,7 @@ import com.binance.client.SyncRequestClient;
 import com.binance.client.model.enums.OrderSide;
 import com.binance.client.model.enums.OrderType;
 import com.binance.client.model.trade.Order;
-import com.btb.data.DataHolder;
+import com.btb.data.RealTimeData;
 import com.btb.positions.PositionHandler;
 import com.btb.singletonHelpers.RequestClient;
 import com.btb.singletonHelpers.TelegramMessenger;
@@ -24,10 +24,9 @@ import static com.binance.client.model.enums.OrderSide.SELL;
 import static com.binance.client.model.enums.OrderType.*;
 import static com.binance.client.model.enums.TimeInForce.GTC;
 import static com.binance.client.model.enums.WorkingType.MARK_PRICE;
-import static com.btb.data.DataHolder.CandleType.CLOSE;
-import static com.btb.data.DataHolder.CrossType.DOWN;
-import static com.btb.data.DataHolder.CrossType.UP;
-import static com.btb.data.DataHolder.IndicatorType.RSI;
+import static com.btb.data.RealTimeData.CandleType.CLOSE;
+import static com.btb.data.RealTimeData.CrossType.DOWN;
+import static com.btb.data.RealTimeData.CrossType.UP;
 import static com.btb.strategies.PositionInStrategy.*;
 import static com.btb.strategies.rsiStrategies.RSIConstants.*;
 import static com.btb.utils.Utils.*;
@@ -52,15 +51,15 @@ public class RSIEntryStrategy implements EntryStrategy {
     }
 
     @Override
-    public synchronized PositionHandler run(DataHolder realTimeData) {
+    public synchronized PositionHandler run(RealTimeData realTimeData) {
         if (positionInStrategy == POSITION_ONE) {
-            if (realTimeData.crossed(RSI, CLOSE, DOWN, RSI_ENTRY_THRESHOLD_1)) {
+            if (realTimeData.rsiCrossed(CLOSE, DOWN, RSI_ENTRY_THRESHOLD_1)) {
                 positionInStrategy = POSITION_TWO;
             }
             return null;
         } else if (positionInStrategy == POSITION_TWO) {
-            if (realTimeData.crossed(RSI, CLOSE, UP, RSI_ENTRY_THRESHOLD_2)) {
-                rsiValueToCheckForPosition3 = realTimeData.getRsiCloseValue();
+            if (realTimeData.rsiCrossed( CLOSE, UP, RSI_ENTRY_THRESHOLD_2)) {
+                rsiValueToCheckForPosition3 = realTimeData.getRSIValueAtIndex(realTimeData.getLastIndex()-1);
                 positionInStrategy = POSITION_THREE;
             }
             return null;
@@ -71,10 +70,10 @@ public class RSIEntryStrategy implements EntryStrategy {
                 positionInStrategy = POSITION_TWO;
                 return null;
             }
-            if (rsiValueToCheckForPosition3 != realTimeData.getRsiCloseValue()) {
+            if (rsiValueToCheckForPosition3 != realTimeData.getRSIValueAtIndex(realTimeData.getLastIndex()-1)) {
                 time_passed_from_position_2++;
             }
-            if (realTimeData.above(RSI, CLOSE, RSI_ENTRY_THRESHOLD_3)) {
+            if (realTimeData.isRSIValueAboveThreshold( CLOSE, RSI_ENTRY_THRESHOLD_3)) {
                 time_passed_from_position_2 = 0;
                 positionInStrategy = POSITION_ONE;
                 rsiValueToCheckForPosition3 = -1;

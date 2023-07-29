@@ -5,7 +5,7 @@ import com.binance.client.model.enums.CandlestickInterval;
 import com.binance.client.model.enums.OrderSide;
 import com.binance.client.model.trade.Order;
 import com.btb.data.AccountBalance;
-import com.btb.data.DataHolder;
+import com.btb.data.RealTimeData;
 import com.btb.singletonHelpers.RequestClient;
 import com.btb.singletonHelpers.TelegramMessenger;
 import com.btb.strategies.ExitStrategy;
@@ -56,7 +56,7 @@ public class PositionHandler implements Serializable {
         return isActive && isSelling && (!status.equals(NEW)) && (!rebuying) && (qty == 0);
     }
 
-    public synchronized void run(DataHolder realTimeData) {
+    public synchronized void run(RealTimeData realTimeData) {
         isSelling = false;
         for (ExitStrategy exitStrategy : exitStrategies) {
             SellingInstructions sellingInstructions = exitStrategy.run(realTimeData);
@@ -68,7 +68,7 @@ public class PositionHandler implements Serializable {
         }
     }
 
-    public synchronized void update(DataHolder realTimeData, CandlestickInterval interval) {
+    public synchronized void update(CandlestickInterval interval) {
         rebuying = false;
         try {
             Order order = requestClient.getOrder(symbol, orderID, clientOrderId);
@@ -79,14 +79,14 @@ public class PositionHandler implements Serializable {
                 log.info("{} status changed from NEW to {}", symbol, order.getStatus());
             }
             status = order.getStatus();
-            isActive(realTimeData, order, interval);
+            isActive(order, interval);
             qty = accountBalance.getPosition(symbol).getPositionAmt().doubleValue();
         } catch (Exception e) {
             log.error("Error during update position status", e);
         }
     }
 
-    private void isActive(DataHolder realTimeData, Order order, CandlestickInterval interval) {
+    private void isActive(Order order, CandlestickInterval interval) {
         if (status.equals(NEW)) {
             rebuyOrder(order);
         } else if (status.equals(PARTIALLY_FILLED)) {
@@ -154,7 +154,7 @@ public class PositionHandler implements Serializable {
         }
     }
 
-    private void closePosition(SellingInstructions sellingInstructions, DataHolder realTimeData) {
+    private void closePosition(SellingInstructions sellingInstructions, RealTimeData realTimeData) {
         String sellingQty = fixQuantity(formatQty(percentageOfQuantity(sellingInstructions.getSellingQtyPercentage()), symbol));
         try {
             Order order = null;

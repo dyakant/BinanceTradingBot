@@ -1,6 +1,6 @@
 package com.btb.strategies.macdOverRSIStrategies.Short;
 
-import com.btb.data.DataHolder;
+import com.btb.data.RealTimeData;
 import com.btb.positions.SellingInstructions;
 import com.btb.strategies.macdOverRSIStrategies.MACDOverRSIBaseExitStrategy;
 import com.btb.data.Trailer;
@@ -28,7 +28,7 @@ public class MACDOverRSIShortExitStrategy4 extends MACDOverRSIBaseExitStrategy {
     }
 
     @Override
-    public SellingInstructions run(DataHolder realTimeData) {
+    public SellingInstructions run(RealTimeData realTimeData) {
         log.trace("{} Enter MACDOverRSIShortExitStrategy4, isTrailing={}", realTimeData.getSymbol(), isTrailing);
         double currentPrice = realTimeData.getCurrentPrice();
         if (isTrailing) {

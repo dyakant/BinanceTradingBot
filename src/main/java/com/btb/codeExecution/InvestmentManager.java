@@ -3,7 +3,6 @@ package com.btb.codeExecution;
 import com.binance.client.SubscriptionClient;
 import com.binance.client.model.enums.CandlestickInterval;
 import com.btb.data.AccountBalance;
-import com.btb.data.DataHolder;
 import com.btb.data.RealTimeData;
 import com.btb.positions.PositionHandler;
 import com.btb.singletonHelpers.ExecService;
@@ -42,20 +41,20 @@ public class InvestmentManager implements Runnable {
 
         subscriptionClient.subscribeCandlestickEvent(symbol, interval,
                 ((event) -> iterationExecutorService.execute(() -> {
-                    DataHolder dataHolder = realTimeData.updateData(symbol, event);
-                    if (dataHolder != null) {
+                    boolean updated = realTimeData.updateData(symbol, event);
+                    if (updated) {
                         AccountBalance.getAccountBalance().updateBalance();
                         for (PositionHandler positionHandler : positionHandlers) {
-                            positionHandler.update(dataHolder, interval);
+                            positionHandler.update(interval);
                             if (positionHandler.isSoldOut()) {
                                 positionHandler.terminate();
                                 positionHandlers.remove(positionHandler);
                             } else {
-                                positionHandler.run(dataHolder);
+                                positionHandler.run(realTimeData);
                             }
                         }
                         for (EntryStrategy entryStrategy : entryStrategies) {
-                            PositionHandler positionHandler = entryStrategy.run(dataHolder);
+                            PositionHandler positionHandler = entryStrategy.run(realTimeData);
                             if (positionHandler != null) {
                                 positionHandlers.add(positionHandler);
                             }

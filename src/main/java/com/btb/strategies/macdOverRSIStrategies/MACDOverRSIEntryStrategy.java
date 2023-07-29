@@ -3,7 +3,7 @@ package com.btb.strategies.macdOverRSIStrategies;
 import com.binance.client.model.enums.PositionSide;
 import com.binance.client.model.trade.Order;
 import com.btb.data.AccountBalance;
-import com.btb.data.DataHolder;
+import com.btb.data.RealTimeData;
 import com.btb.positions.PositionHandler;
 import com.btb.singletonHelpers.RequestClient;
 import com.btb.singletonHelpers.TelegramMessenger;
@@ -27,10 +27,9 @@ import static com.binance.client.model.enums.PositionSide.LONG;
 import static com.binance.client.model.enums.PositionSide.SHORT;
 import static com.btb.data.Config.DOUBLE_ZERO;
 import static com.btb.data.Config.ZERO;
-import static com.btb.data.DataHolder.CandleType.CLOSE;
-import static com.btb.data.DataHolder.CrossType.DOWN;
-import static com.btb.data.DataHolder.CrossType.UP;
-import static com.btb.data.DataHolder.IndicatorType.MACD_OVER_RSI;
+import static com.btb.data.RealTimeData.CandleType.CLOSE;
+import static com.btb.data.RealTimeData.CrossType.DOWN;
+import static com.btb.data.RealTimeData.CrossType.UP;
 import static com.btb.strategies.EntryStrategyType.MACD;
 import static com.btb.strategies.macdOverRSIStrategies.MACDOverRSIConstants.*;
 import static com.btb.strategies.macdOverRSIStrategies.MACDOverRSIEntryStrategy.DecliningType.NEGATIVE;
@@ -58,7 +57,7 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
     }
 
     @Override
-    public synchronized PositionHandler run(DataHolder realTimeData) {
+    public synchronized PositionHandler run(RealTimeData realTimeData) {
         boolean notInPosition = accountBalance.getPosition(symbol).getPositionAmt().compareTo(BigDecimal.valueOf(DOUBLE_ZERO)) == ZERO;
         if (notInPosition) {
             boolean noOpenOrders = requestClient.getOpenOrders(symbol).size() == ZERO;
@@ -79,18 +78,18 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
      * @param realTimeData - свежие данные
      * @return - набор правил для закрытия позиции
      */
-    private PositionHandler processDataWithRulesAndMakeOrder(DataHolder realTimeData) {
+    private PositionHandler processDataWithRulesAndMakeOrder(RealTimeData realTimeData) {
         double currentPrice = realTimeData.getCurrentPrice();
         boolean isCurrentPriceAboveSMA = currentPrice > realTimeData.getSMAValueAtIndex(realTimeData.getLastIndex());
 //        logMacdOverRsiValues(realTimeData);
         if (isCurrentPriceAboveSMA) {
-            boolean isPreviousMacdCandleCrossedRsiUp = realTimeData.crossed(MACD_OVER_RSI, CLOSE, UP, ZERO);
+            boolean isPreviousMacdCandleCrossedRsiUp = realTimeData.macdOverRsiCrossed(CLOSE, UP, ZERO);
             if (isPreviousMacdCandleCrossedRsiUp) {
                 if (bought) return null;
                 log.info("{} BUY LONG first branch", symbol);
                 return buyAndCreatePositionHandler(currentPrice, LONG);
             } else {
-                boolean macdValueBelowZero = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()) < ZERO;
+                boolean macdValueBelowZero = realTimeData.getMACDOverRsiValueAtIndex(realTimeData.getLastIndex()) < ZERO;
                 boolean isMacdOverRsiGrows = decliningPyramid(realTimeData, NEGATIVE);
                 if (macdValueBelowZero && isMacdOverRsiGrows) {
                     if (bought) return null;
@@ -100,13 +99,13 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
             }
             bought = false;
         } else {
-            boolean isPreviousMacdCandleCrossedRsiDown = realTimeData.crossed(MACD_OVER_RSI, CLOSE, DOWN, ZERO);
+            boolean isPreviousMacdCandleCrossedRsiDown = realTimeData.macdOverRsiCrossed(CLOSE, DOWN, ZERO);
             if (isPreviousMacdCandleCrossedRsiDown) {
                 if (bought) return null;
                 log.info("{} BUY SHORT! first branch", symbol);
                 return buyAndCreatePositionHandler(currentPrice, SHORT);
             } else {
-                boolean macdValueAboveZero = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex()) > ZERO;
+                boolean macdValueAboveZero = realTimeData.getMACDOverRsiValueAtIndex(realTimeData.getLastIndex()) > ZERO;
                 boolean isMacdOverRsiFall = decliningPyramid(realTimeData, POSITIVE);
                 if (macdValueAboveZero && isMacdOverRsiFall) {
                     if (bought) return null;
@@ -230,12 +229,12 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
      * @param type         - фаза
      * @return - true для NEGATIVE при росте MACD и для POSITIVE при снижении MACD
      */
-    private boolean decliningPyramid(DataHolder realTimeData, DecliningType type) {
+    private boolean decliningPyramid(RealTimeData realTimeData, DecliningType type) {
         boolean rule1;
         boolean rule2;
-        double currentMacdOverRsiValue = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex() - 1);
-        double prevMacdOverRsiValue = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex() - 2);
-        double prevPrevMacdOverRsiValue = realTimeData.getMacdOverRsiValueAtIndex(realTimeData.getLastIndex() - 3);
+        double currentMacdOverRsiValue = realTimeData.getMACDOverRsiValueAtIndex(realTimeData.getLastIndex() - 1);
+        double prevMacdOverRsiValue = realTimeData.getMACDOverRsiValueAtIndex(realTimeData.getLastIndex() - 2);
+        double prevPrevMacdOverRsiValue = realTimeData.getMACDOverRsiValueAtIndex(realTimeData.getLastIndex() - 3);
         if (type == NEGATIVE) {
             rule1 = currentMacdOverRsiValue > prevMacdOverRsiValue;
             rule2 = prevMacdOverRsiValue > prevPrevMacdOverRsiValue;

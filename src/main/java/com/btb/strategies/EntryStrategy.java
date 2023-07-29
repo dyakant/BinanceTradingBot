@@ -1,13 +1,13 @@
 package com.btb.strategies;
 
-import com.btb.data.DataHolder;
+import com.btb.data.RealTimeData;
 import com.btb.positions.PositionHandler;
 
 public interface EntryStrategy {
     /**
      * @return Position entry if purchased coins else null.
      */
-    PositionHandler run(DataHolder realTimeData);
+    PositionHandler run(RealTimeData realTimeData);
 
     void setTakeProfitPercentage(double takeProfitPercentage);
 
