@@ -98,14 +98,13 @@ public class PositionHandler implements Serializable {
         String message;
         if (NEW.toString().equals(order.getStatus())) {
             message = String.format("Order to %s %s by %s was placed at %s",
-                    order.getSide().toLowerCase(), order.getOrigQty(), order.getPrice(), getTime(order.getUpdateTime()));
+                    order.getSide().toLowerCase(), order.getOrigQty(), order.getAvgPrice(), getTime(order.getUpdateTime()));
         } else if (FILLED.toString().equals(order.getStatus())) {
             message = String.format("Order to %s %s by %s was executed at %s",
                     order.getSide().toLowerCase(), order.getExecutedQty(), order.getCumQty(), getTime(order.getUpdateTime()));
         } else {
             message = String.format("!!!! Order to %s %s by %s was executed at %s, status %s",
-                    order.getSide().toLowerCase(), order.getOrigQty(), order.getPrice(), getTime(order.getUpdateTime()), order.getStatus());
-            log.info("{} order:{}", symbol, order);
+                    order.getSide().toLowerCase(), order.getOrigQty(), order.getAvgPrice(), getTime(order.getUpdateTime()), order.getStatus());
         }
         TelegramMessenger.send(symbol, message);
     }
@@ -177,7 +176,7 @@ public class PositionHandler implements Serializable {
                 case CLOSE_SHORT_MARKET -> getRequestClient().postOrder(symbol, BUY, MARKET, sellingQty, null);
             };
             updatePositionInfo(order);
-            TelegramMessenger.send(symbol, "Order to close position was placed. Selling price: " + currentPrice);
+//            TelegramMessenger.send(symbol, "Order to close position was placed. Selling price: " + currentPrice);
         } catch (Exception e) {
             log.error("Exception during closePosition: ", e);
             TelegramMessenger.send(symbol, "Exception happened");

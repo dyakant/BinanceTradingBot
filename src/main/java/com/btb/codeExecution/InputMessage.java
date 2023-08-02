@@ -45,9 +45,10 @@ public class InputMessage {
 
             case RealTImeOperations.CLOSE_PROGRAM:
 
-            case RealTImeOperations.GET_OPEN_POSITIONS:
                 returnValue = input + " - processed";
                 break;
+
+            case RealTImeOperations.GET_OPEN_POSITIONS:
 
             case RealTImeOperations.GET_CURRENT_BALANCE:
 
