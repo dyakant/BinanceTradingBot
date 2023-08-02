@@ -11,7 +11,7 @@ import static com.btb.data.Config.COMMAND;
 import static com.btb.data.Config.COMMAND_CONSOLE;
 
 @Slf4j
-public class Main {
+public class BinanceTradingBotMain {
     public static void main(String[] args) {
         Config config = new Config();
         AccountBalance accountBalance = AccountBalance.getAccountBalance();
