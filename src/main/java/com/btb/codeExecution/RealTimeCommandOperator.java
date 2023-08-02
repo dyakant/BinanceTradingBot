@@ -155,6 +155,8 @@ public class RealTimeCommandOperator {
             } catch (InterruptedException e) {
                 executorService.shutdownNow();
             }
+            TelegramMessenger.send("TelegramBot is closed.");
+            System.exit(200);
         });
     }
 
