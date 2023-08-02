@@ -27,6 +27,7 @@ import static com.btb.utils.Utils.getZonedDateTime;
 public class RealTimeData {
     public static final int UPDATE_DATA_SKIP_EVENTS_COUNTER = 20;
     private final String symbol;
+    private final CandlestickInterval interval;
     private Long lastCandleOpenTime;
     private BaseBarSeries baseBarSeries;
     private int endIndex;
@@ -40,6 +41,7 @@ public class RealTimeData {
 
     public RealTimeData(String symbol, CandlestickInterval interval) {
         this.symbol = symbol;
+        this.interval = interval;
         baseBarSeries = new BaseBarSeries();
         SyncRequestClient syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
         List<Candlestick> candlestickBars = syncRequestClient.getCandlestick(symbol, interval, null, null, Config.CANDLE_NUM);
@@ -47,7 +49,6 @@ public class RealTimeData {
         currentPrice = candlestickBars.get(candlestickBars.size() - 1).getClose().doubleValue();
         fillRealTimeData(candlestickBars);
         calculateIndicators();
-        endIndex = baseBarSeries.getEndIndex();
     }
 
     /**
@@ -64,14 +65,19 @@ public class RealTimeData {
         if (!isNewCandle && updateCounter++ != UPDATE_DATA_SKIP_EVENTS_COUNTER) {
             return false;
         }
-        endIndex = baseBarSeries.getEndIndex();
-        log.trace("{} CandlestickEvent updated: \nbar[{}]: {}, \nbar[{}]: {}, \nbar[{}]: {}", symbol,
-                baseBarSeries.getEndIndex(), baseBarSeries.getBar(baseBarSeries.getEndIndex()),
-                baseBarSeries.getEndIndex() - 1, baseBarSeries.getBar(baseBarSeries.getEndIndex() - 1),
-                baseBarSeries.getEndIndex() - 2, baseBarSeries.getBar(baseBarSeries.getEndIndex() - 2));
         updateCounter = 0;
         calculateIndicators();
+        logTraceBarsState();
         return true;
+    }
+
+    private void logTraceBarsState() {
+        if (log.isTraceEnabled()) {
+            log.trace("{} CandlestickEvent updated: \nbar[{}]: {}, \nbar[{}]: {}, \nbar[{}]: {}", symbol,
+                    baseBarSeries.getEndIndex(), baseBarSeries.getBar(baseBarSeries.getEndIndex()),
+                    baseBarSeries.getEndIndex() - 1, baseBarSeries.getBar(baseBarSeries.getEndIndex() - 1),
+                    baseBarSeries.getEndIndex() - 2, baseBarSeries.getBar(baseBarSeries.getEndIndex() - 2));
+        }
     }
 
     private boolean updateLastCandle(CandlestickEvent event) {
@@ -91,6 +97,7 @@ public class RealTimeData {
             baseBarSeries = baseBarSeries.getSubSeries(0, baseBarSeries.getEndIndex());
         }
         baseBarSeries.addBar(candleDuration, closeTime, open, high, low, close, volume);
+        endIndex = baseBarSeries.getEndIndex();
         return isNewCandle;
     }
 
@@ -105,6 +112,7 @@ public class RealTimeData {
             double volume = candlestickBar.getVolume().doubleValue();
             baseBarSeries.addBar(candleDuration, closeTime, open, high, low, close, volume);
         }
+        endIndex = baseBarSeries.getEndIndex();
     }
 
     private void calculateIndicators() {
@@ -181,6 +189,10 @@ public class RealTimeData {
         return symbol;
     }
 
+    public CandlestickInterval getInterval() {
+        return interval;
+    }
+
     public Double getCurrentPrice() {
         return currentPrice;
     }
@@ -193,7 +205,7 @@ public class RealTimeData {
         OPEN, CLOSE
     }
 
-        public enum CrossType {
+    public enum CrossType {
         UP, DOWN
     }
 
