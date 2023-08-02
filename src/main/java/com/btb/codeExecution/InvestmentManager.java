@@ -46,11 +46,11 @@ public class InvestmentManager implements Runnable {
                         AccountBalance.getAccountBalance().updateBalance();
                         for (PositionHandler positionHandler : positionHandlers) {
                             positionHandler.update(interval);
-                            if (positionHandler.isSoldOut()) {
-                                positionHandler.terminate();
+                            if (positionHandler.shouldStopTrading()) {
+                                positionHandler.stopTrading();
                                 positionHandlers.remove(positionHandler);
                             } else {
-                                positionHandler.run(realTimeData);
+                                positionHandler.process(realTimeData);
                             }
                         }
                         for (EntryStrategy entryStrategy : entryStrategies) {
