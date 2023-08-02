@@ -2,7 +2,7 @@ package com.btb.strategies.macdOverRSIStrategies;
 
 import com.binance.client.model.enums.PositionSide;
 import com.binance.client.model.trade.Order;
-import com.btb.data.AccountBalance;
+import com.btb.data.Account;
 import com.btb.data.RealTimeData;
 import com.btb.data.Trailer;
 import com.btb.positions.PositionHandler;
@@ -39,7 +39,6 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
     public final String name = MACD.getName();
     public final String symbol;
     private final RequestClient requestClient;
-    private final AccountBalance accountBalance;
     private double takeProfitPercentage = TAKE_PROFIT_PERCENTAGE;
     private double stopLossPercentage = STOP_LOSS_PERCENTAGE;
     private final int leverage = LEVERAGE;
@@ -47,7 +46,6 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
 //    private volatile boolean bought = false;
 
     public MACDOverRSIEntryStrategy(String symbol) {
-        accountBalance = AccountBalance.getAccountBalance();
         requestClient = RequestClient.getRequestClient();
         requestClient.changeInitialLeverage(symbol, leverage);
         this.symbol = symbol;
@@ -55,7 +53,7 @@ public class MACDOverRSIEntryStrategy implements EntryStrategy {
 
     @Override
     public synchronized PositionHandler run(RealTimeData realTimeData) {
-        boolean notInPosition = accountBalance.getPosition(symbol).getPositionAmt().compareTo(BigDecimal.valueOf(DOUBLE_ZERO)) == ZERO;
+        boolean notInPosition = Account.getAccount().getPosition(symbol).getPositionAmt().compareTo(BigDecimal.valueOf(DOUBLE_ZERO)) == ZERO;
         if (notInPosition) {
             boolean noOpenOrders = requestClient.getOpenOrders(symbol).size() == ZERO;
             if (noOpenOrders) {

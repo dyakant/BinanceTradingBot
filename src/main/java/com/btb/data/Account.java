@@ -14,18 +14,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class AccountBalance {
+public class Account {
     private final SyncRequestClient syncRequestClient;
     private ConcurrentHashMap<String, Asset> assets;
     private ConcurrentHashMap<String, Position> positions;
     private final ReadWriteLock assetsLock = new ReentrantReadWriteLock();
     private final ReadWriteLock positionsLock = new ReentrantReadWriteLock();
 
-    private static class AccountBalanceHolder {
-        private static final AccountBalance accountBalance = new AccountBalance();
+    private static class AccountHolder {
+        private static final Account account = new Account();
     }
 
-    private AccountBalance() {
+    private Account() {
         assets = new ConcurrentHashMap<>();
         positions = new ConcurrentHashMap<>();
         syncRequestClient = RequestClient.getRequestClient().getSyncRequestClient();
@@ -36,12 +36,12 @@ public class AccountBalance {
             assets.put(asset.getAsset().toLowerCase(), asset);
     }
 
-    public static AccountBalance getAccountBalance() {
-        return AccountBalanceHolder.accountBalance;
+    public static Account getAccount() {
+        return AccountHolder.account;
     }
 
-    public static BigDecimal getBalanceUsdt() {
-        return AccountBalanceHolder.accountBalance.getCoinBalance("usdt");
+    public static BigDecimal getUsdtBalance() {
+        return AccountHolder.account.getCoinBalance("usdt");
     }
 
     public BigDecimal getCoinBalance(String symbol) {
@@ -66,7 +66,7 @@ public class AccountBalance {
         return null;
     }
 
-    public void updateBalance() {
+    public void updateInfo() {
         AccountInformation accountInformation = syncRequestClient.getAccountInformation();
 
         ConcurrentHashMap<String, Position> newPositions = new ConcurrentHashMap<>();

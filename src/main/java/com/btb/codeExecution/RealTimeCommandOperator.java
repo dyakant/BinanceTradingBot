@@ -5,7 +5,7 @@ import com.binance.client.model.enums.CandlestickInterval;
 import com.binance.client.model.trade.MyTrade;
 import com.binance.client.model.trade.Order;
 import com.binance.client.model.trade.Position;
-import com.btb.data.AccountBalance;
+import com.btb.data.Account;
 import com.btb.singletonHelpers.ExecService;
 import com.btb.singletonHelpers.RequestClient;
 import com.btb.singletonHelpers.SubClient;
@@ -43,7 +43,7 @@ public class RealTimeCommandOperator {
         });
 
         commandsAndOps.put(RealTImeOperations.CLOSE_ALL_POSITIONS, (message) -> {
-            List<Position> openPositions = AccountBalance.getAccountBalance().getOpenPositions();
+            List<Position> openPositions = Account.getAccount().getOpenPositions();
             for (Position openPosition : openPositions) {
                 if (LONG.toString().equals(openPosition.getPositionSide())) {
                     requestClient.postOrder(openPosition.getSymbol().toLowerCase(), SELL, MARKET, openPosition.getPositionAmt().toString(), null);
@@ -119,7 +119,7 @@ public class RealTimeCommandOperator {
         });
 
         commandsAndOps.put(RealTImeOperations.GET_OPEN_POSITIONS, (message) -> {
-            List<Position> openPositions = AccountBalance.getAccountBalance().getOpenPositions();
+            List<Position> openPositions = Account.getAccount().getOpenPositions();
             StringBuilder stringBuilder = new StringBuilder();
             int index = 1;
             stringBuilder.append("Open positions:\n");
@@ -142,7 +142,7 @@ public class RealTimeCommandOperator {
         });
 
         commandsAndOps.put(RealTImeOperations.GET_CURRENT_BALANCE, (message) ->
-                TelegramMessenger.send("Your current balance is: " + AccountBalance.getBalanceUsdt()));
+                TelegramMessenger.send("Your current balance is: " + Account.getUsdtBalance()));
 
         commandsAndOps.put(RealTImeOperations.CLOSE_PROGRAM, (message) -> {
             SubClient.getSubClient().getSubscriptionClient().unsubscribeAll();

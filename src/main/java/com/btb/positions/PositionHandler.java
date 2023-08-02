@@ -5,7 +5,7 @@ import com.binance.client.model.enums.CandlestickInterval;
 import com.binance.client.model.enums.OrderSide;
 import com.binance.client.model.enums.OrderStatus;
 import com.binance.client.model.trade.Order;
-import com.btb.data.AccountBalance;
+import com.btb.data.Account;
 import com.btb.data.RealTimeData;
 import com.btb.singletonHelpers.TelegramMessenger;
 import com.btb.strategies.ExitStrategy;
@@ -21,7 +21,7 @@ import static com.binance.client.model.enums.OrderType.LIMIT;
 import static com.binance.client.model.enums.OrderType.MARKET;
 import static com.binance.client.model.enums.PositionSide.LONG;
 import static com.binance.client.model.enums.PositionSide.SHORT;
-import static com.btb.data.AccountBalance.getAccountBalance;
+import static com.btb.data.Account.getAccount;
 import static com.btb.singletonHelpers.BinanceInfo.formatQty;
 import static com.btb.singletonHelpers.RequestClient.getRequestClient;
 import static com.btb.utils.Utils.*;
@@ -47,7 +47,7 @@ public class PositionHandler implements Serializable {
 
     public synchronized void update(CandlestickInterval interval) {
         try {
-            qty = getAccountBalance().getPosition(symbol).getPositionAmt().doubleValue();
+            qty = getAccount().getPosition(symbol).getPositionAmt().doubleValue();
             Order order = getRequestClient().getOrder(symbol, orderID, clientOrderId);
             processOrderStatus(order, interval);
             log.info("{} Update order information, qty={}, order={}", symbol, qty, order);
@@ -65,7 +65,7 @@ public class PositionHandler implements Serializable {
             terminated = true;
             ResponseResult res = getRequestClient().cancelAllOpenOrder(symbol);
             if (res.getCode() == 200) {
-                TelegramMessenger.send(symbol, "Trading closed.\nBalance:  " + AccountBalance.getBalanceUsdt());
+                TelegramMessenger.send(symbol, "Trading closed.\nBalance:  " + Account.getUsdtBalance());
             } else {
                 TelegramMessenger.send(symbol, "Errors during terminating trading, errCode:" + res.getCode() + ", errMsg:" + res.getMsg());
             }
